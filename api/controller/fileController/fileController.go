@@ -8,7 +8,6 @@ import (
 )
 
 type FileService interface {
-	ReadFileContents(fileName string) (string, error)
 	GetFileDto(fileContent string) (models.FileDTO, error)
 }
 
@@ -36,13 +35,7 @@ func (f *FileController) GetFile(context *gin.Context) {
 	}
 	fullPath := f.contentPath + filePath + ".md"
 
-	content, err := f.fileService.ReadFileContents(fullPath)
-	if err != nil {
-		context.Status(http.StatusNotFound)
-		return
-	}
-
-	dto, err := f.fileService.GetFileDto(content)
+	dto, err := f.fileService.GetFileDto(fullPath)
 	if err != nil {
 		context.Status(http.StatusBadRequest)
 		return

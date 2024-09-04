@@ -23,7 +23,12 @@ func (f *FileServiceImpl) ReadFileContents(fileName string) (string, error) {
 	return string(contentBytes), nil
 }
 
-func (f *FileServiceImpl) GetFileDto(fileContent string) (models.FileDTO, error) {
+func (f *FileServiceImpl) GetFileDto(fileName string) (models.FileDTO, error) {
+	fileContent, err := f.ReadFileContents(fileName)
+	if err != nil {
+		return models.FileDTO{}, err
+	}
+
 	if len(fileContent) == 0 {
 		return models.FileDTO{}, errors.New("content is required")
 	}
