@@ -10,9 +10,9 @@ func main() {
 	engine := gin.Default()
 
 	fileService := service.NewFileService()
-	fileController := fileController.NewFileController(fileService)
+	controller := fileController.NewFileController(fileService, "/api/file", "../testFiles")
 
-	engine.GET("/api/file/*filepath", fileController.GetFile)
+	engine.GET(controller.Path+"/*filepath", controller.GetFile)
 
 	engine.Run("localhost:8080")
 }

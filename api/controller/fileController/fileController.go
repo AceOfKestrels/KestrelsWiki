@@ -4,6 +4,7 @@ import (
 	"api/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 type FileService interface {
@@ -13,35 +14,50 @@ type FileService interface {
 
 type FileController struct {
 	fileService FileService
+	Path        string
+	contentPath string
 }
 
-func NewFileController(fileService FileService) *FileController {
-	return &FileController{fileService: fileService}
+func NewFileController(fileService FileService, path string, contentPath string) *FileController {
+	return &FileController{fileService: fileService, Path: path, contentPath: contentPath}
 }
 
 func (f *FileController) GetFile(context *gin.Context) {
-	filePath := "../testFiles/" + context.Param("filepath")
+	filePath := context.Param("filepath")
 	if filePath == "" {
-		context.AbortWithStatus(http.StatusBadRequest)
+		context.Status(http.StatusBadRequest)
 		return
 	}
 
-	content, err := f.fileService.ReadFileContents(filePath)
+	if strings.Contains(filePath, ".") {
+		context.File(f.contentPath + filePath)
+		context.Status(http.StatusOK)
+		return
+	}
+	fullPath := f.contentPath + filePath + ".md"
+
+	content, err := f.fileService.ReadFileContents(fullPath)
 	if err != nil {
-		context.AbortWithStatus(http.StatusNotFound)
+		context.Status(http.StatusNotFound)
 		return
 	}
 
 	dto, err := f.fileService.GetFileDto(content)
 	if err != nil {
-		context.AbortWithStatus(http.StatusBadRequest)
+		context.Status(http.StatusBadRequest)
 		return
 	}
 
 	if dto.Meta.MirrorOf != "" {
-		context.Redirect(http.StatusPermanentRedirect, dto.Meta.MirrorOf)
+		redirect := strings.ToLower(dto.Meta.MirrorOf)
+		if strings.HasSuffix(redirect, ".md") {
+			redirect = redirect[0 : len(redirect)-3]
+		}
+		context.Redirect(http.StatusPermanentRedirect, redirect)
 		return
 	}
+
+	dto.Meta.Path = f.Path + filePath + ".md"
 
 	context.JSON(http.StatusOK, dto)
 }
