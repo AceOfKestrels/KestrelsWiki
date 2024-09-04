@@ -1,12 +1,14 @@
 package fileController
 
 import (
+	"api/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type FileService interface {
 	ReadFileContents(fileName string) (string, error)
+	GetFileDto(fileContent string) (models.FileDTO, error)
 }
 
 type FileController struct {
@@ -24,15 +26,21 @@ func (f *FileController) GetFile(context *gin.Context) {
 		return
 	}
 
-	content, error := f.fileService.ReadFileContents(filePath)
-	if error != nil {
+	content, err := f.fileService.ReadFileContents(filePath)
+	if err != nil {
 		context.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	dto, error := NewFileDto(content)
-	if error != nil {
+	dto, err := f.fileService.GetFileDto(content)
+	if err != nil {
 		context.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if dto.Meta.MirrorOf != "" {
+		context.Redirect(http.StatusPermanentRedirect, dto.Meta.MirrorOf)
+		return
 	}
 
 	context.JSON(http.StatusOK, dto)

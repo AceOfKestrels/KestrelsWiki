@@ -12,7 +12,7 @@ func main() {
 	fileService := service.NewFileService()
 	fileController := fileController.NewFileController(fileService)
 
-	engine.GET("/api/file/:filepath", fileController.GetFile)
+	engine.GET("/api/file/*filepath", fileController.GetFile)
 
 	engine.Run("localhost:8080")
 }
