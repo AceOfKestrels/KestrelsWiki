@@ -37,26 +37,14 @@ func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) er
 		return errors.New("file is empty")
 	}
 
-	firstLine := content
-	if split := strings.Split(content, "\n"); len(split) != 0 {
-		firstLine = split[0]
-	}
-
-	var meta models.FileMetaDTO
-	var articleContent string
-	if err = json.Unmarshal([]byte(firstLine), &meta); err == nil {
-		articleContent = content[len(firstLine)-1 : len(content)-1]
-	} else {
-		articleContent = content
-		meta = models.FileMetaDTO{}
-	}
+	article, meta := getArticle(content)
 
 	if meta.MirrorOf != "" {
 		return s.setMirror(filePath, meta.MirrorOf, ctx)
 	}
 
 	if meta.Title == "" {
-		meta.Title, err = getFileTitle(articleContent)
+		meta.Title, err = getFileTitle(article)
 		if err != nil {
 			return err
 		}
@@ -67,26 +55,23 @@ func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) er
 		return err
 	}
 
-	existingId, err := s.dbClient.File.Query().Where(file.Path(filePath)).OnlyID(ctx)
+	return s.setFile(filePath, meta.Title, updated, article, ctx)
+}
 
-	if err != nil {
-		_, err = s.dbClient.File.Update().
-			Where(file.ID(existingId)).
-			SetTitle(meta.Title).
-			SetContent(articleContent).
-			SetUpdated(updated).
-			Save(ctx)
-		return err
+func getArticle(fileContent string) (article string, meta models.FileMetaDTO) {
+	firstLine := fileContent
+	if split := strings.Split(fileContent, "\n"); len(split) != 0 {
+		firstLine = split[0]
 	}
 
-	_, err = s.dbClient.File.Create().
-		SetPath(filePath).
-		SetTitle(meta.Title).
-		SetContent(articleContent).
-		SetUpdated(updated).
-		Save(ctx)
+	if err := json.Unmarshal([]byte(firstLine), &meta); err == nil {
+		article = fileContent[len(firstLine)-1 : len(fileContent)-1]
+	} else {
+		article = fileContent
+		meta = models.FileMetaDTO{}
+	}
 
-	return err
+	return article, meta
 }
 
 func getFileTitle(content string) (string, error) {
@@ -136,5 +121,28 @@ func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.
 	}
 
 	_, err = s.dbClient.Mirror.Create().SetOriginPath(origin).SetTargetPath(target).Save(ctx)
+	return err
+}
+
+func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time, content string, ctx context.Context) error {
+	existingId, err := s.dbClient.File.Query().Where(file.Path(path)).OnlyID(ctx)
+
+	if err != nil {
+		_, err = s.dbClient.File.Update().
+			Where(file.ID(existingId)).
+			SetTitle(title).
+			SetContent(content).
+			SetUpdated(updated).
+			Save(ctx)
+		return err
+	}
+
+	_, err = s.dbClient.File.Create().
+		SetPath(path).
+		SetTitle(title).
+		SetContent(content).
+		SetUpdated(updated).
+		Save(ctx)
+
 	return err
 }
