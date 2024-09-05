@@ -2,14 +2,16 @@ package fileController
 
 import (
 	"api/models"
+	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type SearchService interface {
 	ContentPath() string
-	GetFileDto(fileContent string) (models.FileDTO, error)
+	GetFileDto(ctx context.Context, fileContent string) (models.FileDTO, error)
 }
 
 type FileController struct {
@@ -21,22 +23,24 @@ func NewFileController(searchService SearchService, path string) *FileController
 	return &FileController{searchService: searchService, Path: path}
 }
 
-func (f *FileController) GetFile(context *gin.Context) {
-	filePath := context.Param("filepath")
+func (f *FileController) GetFile(c *gin.Context) {
+	filePath := c.Param("filepath")
 	if filePath == "" {
-		context.Status(http.StatusBadRequest)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	if strings.Contains(filePath, ".") {
-		context.File(f.searchService.ContentPath() + filePath)
-		context.Status(http.StatusOK)
+		c.File(f.searchService.ContentPath() + filePath)
+		c.Status(http.StatusOK)
 		return
 	}
 
-	dto, err := f.searchService.GetFileDto(filePath + ".md")
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	dto, err := f.searchService.GetFileDto(ctx, filePath[1:]+".md")
 	if err != nil {
-		context.Status(http.StatusBadRequest)
+		c.Status(http.StatusBadRequest)
 		return
 	}
 
@@ -45,11 +49,11 @@ func (f *FileController) GetFile(context *gin.Context) {
 		if strings.HasSuffix(redirect, ".md") {
 			redirect = redirect[0 : len(redirect)-3]
 		}
-		context.Redirect(http.StatusPermanentRedirect, redirect)
+		c.Redirect(http.StatusPermanentRedirect, redirect)
 		return
 	}
 
 	dto.Path = f.Path + filePath + ".md"
 
-	context.JSON(http.StatusOK, dto)
+	c.JSON(http.StatusOK, dto)
 }
