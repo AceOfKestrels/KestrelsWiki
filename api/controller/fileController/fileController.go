@@ -41,8 +41,8 @@ func (f *FileController) GetFile(context *gin.Context) {
 		return
 	}
 
-	if dto.Meta.MirrorOf != "" {
-		redirect := strings.ToLower(dto.Meta.MirrorOf)
+	if dto.MirrorOf != "" {
+		redirect := strings.ToLower(dto.MirrorOf)
 		if strings.HasSuffix(redirect, ".md") {
 			redirect = redirect[0 : len(redirect)-3]
 		}
@@ -50,7 +50,7 @@ func (f *FileController) GetFile(context *gin.Context) {
 		return
 	}
 
-	dto.Meta.Path = f.Path + filePath + ".md"
+	dto.Path = f.Path + filePath + ".md"
 
 	context.JSON(http.StatusOK, dto)
 }

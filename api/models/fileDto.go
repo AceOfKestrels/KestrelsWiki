@@ -1,6 +1,13 @@
 package models
 
+import "time"
+
 type FileDTO struct {
-	Content string      `json:"content"`
-	Meta    FileMetaDto `json:"meta"`
+	MirrorOf      string    `json:"mirrorOf,omitempty"`
+	Title         string    `json:"title"`
+	Path          string    `json:"path"`
+	Updated       time.Time `json:"updated"`
+	Content       string    `json:"content"`
+	Headings      []Heading `json:"headings,omitempty"`
+	IncomingLinks []Link    `json:"links,omitempty"`
 }
