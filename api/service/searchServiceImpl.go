@@ -8,28 +8,73 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type FileService interface {
-	ContentPath() string
-	ReadFileContents(fileName string) (string, error)
-}
-
 type SearchServiceImpl struct {
-	fileService FileService
 	dbClient    *ent.Client
+	contentPath string
 }
 
-func NewSearchService(fileService FileService, dbClient *ent.Client) *SearchServiceImpl {
-	return &SearchServiceImpl{fileService: fileService, dbClient: dbClient}
+func NewSearchService(dbClient *ent.Client, contentPath string) *SearchServiceImpl {
+	return &SearchServiceImpl{dbClient: dbClient, contentPath: contentPath}
+}
+
+func (s *SearchServiceImpl) ContentPath() string {
+	return s.contentPath
+}
+
+func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
+	contentBytes, err := os.ReadFile(s.contentPath + fileName)
+	if err != nil {
+		return "", nil
+	}
+
+	return string(contentBytes), nil
+}
+
+func (s *SearchServiceImpl) GetFileDto(fileName string) (models.FileDTO, error) {
+	fileContent, err := s.ReadFileContents(fileName)
+	if err != nil {
+		return models.FileDTO{}, err
+	}
+
+	if len(fileContent) == 0 {
+		return models.FileDTO{}, errors.New("content is required")
+	}
+
+	firstLine := fileContent
+	if split := strings.Split(fileContent, "\n"); len(split) != 0 {
+		firstLine = split[0]
+	}
+
+	var dto models.FileDTO
+	if err = json.Unmarshal([]byte(firstLine), &dto); err == nil {
+		dto.Content = fileContent[len(firstLine)-1 : len(fileContent)-1]
+	} else {
+		dto = models.FileDTO{Content: fileContent}
+	}
+
+	if dto.MirrorOf != "" {
+		return models.FileDTO{MirrorOf: dto.MirrorOf}, nil
+	}
+
+	if dto.Title == "" {
+		dto.Title, err = getFileTitle(dto.Content)
+		if err != nil {
+			return models.FileDTO{}, err
+		}
+	}
+
+	return dto, nil
 }
 
 func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) error {
-	content, err := s.fileService.ReadFileContents(filePath)
+	content, err := s.ReadFileContents(filePath)
 	if err != nil {
 		return err
 	}
@@ -95,7 +140,7 @@ func getFileTitle(content string) (string, error) {
 
 func (s *SearchServiceImpl) getLastModifiedTime(filePath string) (time.Time, error) {
 	cmd := exec.Command("git", "log", "-1", "--format=%ct", filePath)
-	cmd.Dir = s.fileService.ContentPath()
+	cmd.Dir = s.contentPath
 
 	output, err := cmd.Output()
 	if err != nil {

@@ -30,8 +30,7 @@ func main() {
 
 	engine := gin.Default()
 
-	fileService := service.NewFileService("../testFiles/")
-	searchService := service.NewSearchService(fileService, dbClient)
+	searchService := service.NewSearchService(dbClient, "../testFiles/")
 
 	background := context.Background()
 	ctx, cancel := context.WithTimeout(background, 5*time.Second)
@@ -41,7 +40,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	controller := fileController.NewFileController(fileService, "/api/file")
+	controller := fileController.NewFileController(searchService, "/api/file")
 
 	engine.GET(controller.Path+"/*filepath", controller.GetFile)
 
