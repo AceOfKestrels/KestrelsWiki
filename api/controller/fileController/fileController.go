@@ -8,17 +8,17 @@ import (
 )
 
 type FileService interface {
+	ContentPath() string
 	GetFileDto(fileContent string) (models.FileDTO, error)
 }
 
 type FileController struct {
 	fileService FileService
 	Path        string
-	contentPath string
 }
 
-func NewFileController(fileService FileService, path string, contentPath string) *FileController {
-	return &FileController{fileService: fileService, Path: path, contentPath: contentPath}
+func NewFileController(fileService FileService, path string) *FileController {
+	return &FileController{fileService: fileService, Path: path}
 }
 
 func (f *FileController) GetFile(context *gin.Context) {
@@ -29,13 +29,12 @@ func (f *FileController) GetFile(context *gin.Context) {
 	}
 
 	if strings.Contains(filePath, ".") {
-		context.File(f.contentPath + filePath)
+		context.File(f.fileService.ContentPath() + filePath)
 		context.Status(http.StatusOK)
 		return
 	}
-	fullPath := f.contentPath + filePath + ".md"
 
-	dto, err := f.fileService.GetFileDto(fullPath)
+	dto, err := f.fileService.GetFileDto(filePath + ".md")
 	if err != nil {
 		context.Status(http.StatusBadRequest)
 		return

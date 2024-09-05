@@ -8,14 +8,18 @@ import (
 	"strings"
 )
 
-type FileServiceImpl struct{}
+type FileServiceImpl struct{ contentPath string }
 
-func NewFileService() *FileServiceImpl {
-	return &FileServiceImpl{}
+func NewFileService(contentPath string) *FileServiceImpl {
+	return &FileServiceImpl{contentPath: contentPath}
+}
+
+func (f *FileServiceImpl) ContentPath() string {
+	return f.contentPath
 }
 
 func (f *FileServiceImpl) ReadFileContents(fileName string) (string, error) {
-	contentBytes, err := os.ReadFile(fileName)
+	contentBytes, err := os.ReadFile(f.contentPath + fileName)
 	if err != nil {
 		return "", nil
 	}

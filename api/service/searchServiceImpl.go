@@ -15,6 +15,7 @@ import (
 )
 
 type FileService interface {
+	ContentPath() string
 	ReadFileContents(fileName string) (string, error)
 }
 
@@ -61,7 +62,7 @@ func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) er
 		}
 	}
 
-	updated, err := getLastModifiedTime(filePath)
+	updated, err := s.getLastModifiedTime(filePath)
 	if err != nil {
 		return err
 	}
@@ -107,15 +108,16 @@ func getFileTitle(content string) (string, error) {
 	return "", errors.New("no title found")
 }
 
-func getLastModifiedTime(filePath string) (time.Time, error) {
+func (s *SearchServiceImpl) getLastModifiedTime(filePath string) (time.Time, error) {
 	cmd := exec.Command("git", "log", "-1", "--format=%ct", filePath)
+	cmd.Dir = s.fileService.ContentPath()
 
 	output, err := cmd.Output()
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	timestampStr := string(output)
+	timestampStr := strings.Trim(string(output), "\n")
 	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
 	if err != nil {
 		return time.Time{}, err

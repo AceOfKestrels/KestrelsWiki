@@ -24,20 +24,24 @@ func main() {
 		}
 	}(dbClient)
 
+	if err := dbClient.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
+
 	engine := gin.Default()
 
-	fileService := service.NewFileService()
+	fileService := service.NewFileService("../testFiles/")
 	searchService := service.NewSearchService(fileService, dbClient)
 
 	background := context.Background()
 	ctx, cancel := context.WithTimeout(background, 5*time.Second)
 	defer cancel()
-	err = searchService.UpdateIndex(ctx, "../testFiles/README.md")
+	err = searchService.UpdateIndex(ctx, "README.md")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	controller := fileController.NewFileController(fileService, "/api/file", "../testFiles")
+	controller := fileController.NewFileController(fileService, "/api/file")
 
 	engine.GET(controller.Path+"/*filepath", controller.GetFile)
 
