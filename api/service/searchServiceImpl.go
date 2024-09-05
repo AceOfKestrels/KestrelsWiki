@@ -1,10 +1,13 @@
 package service
 
 import (
+	"api/ent"
+	"api/ent/file"
+	"api/ent/mirror"
 	"api/models"
+	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -17,9 +20,14 @@ type FileService interface {
 
 type SearchServiceImpl struct {
 	fileService FileService
+	dbClient    *ent.Client
 }
 
-func (s *SearchServiceImpl) UpdateIndex(filePath string) error {
+func NewSearchService(fileService FileService, dbClient *ent.Client) *SearchServiceImpl {
+	return &SearchServiceImpl{fileService: fileService, dbClient: dbClient}
+}
+
+func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) error {
 	content, err := s.fileService.ReadFileContents(filePath)
 	if err != nil {
 		return err
@@ -43,8 +51,7 @@ func (s *SearchServiceImpl) UpdateIndex(filePath string) error {
 	}
 
 	if meta.MirrorOf != "" {
-		// add to mirror table (filePath, meta.MirrorOf)
-		return nil
+		return s.setMirror(filePath, meta.MirrorOf, ctx)
 	}
 
 	if meta.Title == "" {
@@ -59,9 +66,26 @@ func (s *SearchServiceImpl) UpdateIndex(filePath string) error {
 		return err
 	}
 
-	fmt.Println(updated)
+	existingId, err := s.dbClient.File.Query().Where(file.Path(filePath)).OnlyID(ctx)
 
-	return nil
+	if err != nil {
+		_, err = s.dbClient.File.Update().
+			Where(file.ID(existingId)).
+			SetTitle(meta.Title).
+			SetContent(articleContent).
+			SetUpdated(updated).
+			Save(ctx)
+		return err
+	}
+
+	_, err = s.dbClient.File.Create().
+		SetPath(filePath).
+		SetTitle(meta.Title).
+		SetContent(articleContent).
+		SetUpdated(updated).
+		Save(ctx)
+
+	return err
 }
 
 func getFileTitle(content string) (string, error) {
@@ -98,4 +122,17 @@ func getLastModifiedTime(filePath string) (time.Time, error) {
 	}
 
 	return time.Unix(timestamp, 0), nil
+}
+
+func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) error {
+	id, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(origin)).OnlyID(ctx)
+	if err == nil {
+		_, err = s.dbClient.Mirror.Update().Where(mirror.ID(id)).SetTargetPath(target).Save(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = s.dbClient.Mirror.Create().SetOriginPath(origin).SetTargetPath(target).Save(ctx)
+	return err
 }
