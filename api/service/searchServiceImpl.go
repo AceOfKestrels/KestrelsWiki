@@ -37,7 +37,6 @@ func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
 
 	return string(contentBytes), nil
 }
-
 func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
 	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(context)
 	if err != nil {
