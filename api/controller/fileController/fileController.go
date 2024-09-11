@@ -40,7 +40,7 @@ func (f *FileController) GetFile(c *gin.Context) {
 	defer cancel()
 	dto, err := f.searchService.GetFileDto(ctx, filePath[1:]+".md")
 	if err != nil {
-		c.Status(http.StatusBadRequest)
+		c.Status(http.StatusNotFound)
 		return
 	}
 

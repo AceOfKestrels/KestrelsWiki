@@ -6,26 +6,30 @@ import (
 	"api/logger"
 	"api/service"
 	"context"
+	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
-	"os"
 	"time"
 
 	_ "github.com/xiaoqidun/entps"
 )
 
 func main() {
-	dbPath := "./data.db"
-	apiPort := 8080
+	dbPath := flag.String("dbPath", "./data.db", "path to the database file")
+	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
+	debug := flag.Bool("debug", false, "debug mode")
+	flag.Parse()
 
-	log.SetOutput(os.Stdout)
+	logger.Init()
 
 	logger.Println(logger.DB, "attempting to open database at %v", dbPath)
-	dbClient, err := ent.Open("sqlite3", "file:"+dbPath)
-	dbClient = dbClient.Debug()
+	dbClient, err := ent.Open("sqlite3", "file:"+*dbPath)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *debug {
+		dbClient = dbClient.Debug()
 	}
 	defer func(dbClient *ent.Client) {
 		logger.Println(logger.DB, "closing database")
@@ -52,14 +56,17 @@ func main() {
 	}
 
 	logger.Println(logger.API, "initializing gin engine")
+	if !*debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	engine := gin.Default()
 
 	controller := fileController.NewFileController(searchService, "/api/file")
 
 	engine.GET(controller.Path+"/*filepath", controller.GetFile)
 
-	logger.Println(logger.API, "starting web server on port %v", apiPort)
-	err = engine.Run(fmt.Sprintf("localhost:%v", apiPort))
+	logger.Println(logger.API, "starting web server on port %v", *apiPort)
+	err = engine.Run(fmt.Sprintf("localhost:%v", *apiPort))
 	if err != nil {
 		log.Fatal(err)
 	}

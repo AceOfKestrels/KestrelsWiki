@@ -39,6 +39,12 @@ func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
 }
 func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
 	fileName = strings.ToLower(fileName)
+
+	mirrorData, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(fileName)).Only(context)
+	if err == nil {
+		return models.FileDTO{MirrorOf: mirrorData.TargetPath}, nil
+	}
+
 	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(context)
 	if err != nil {
 		return models.FileDTO{}, err
@@ -189,6 +195,8 @@ func (s *SearchServiceImpl) getLastModifiedTime(filePath string) (time.Time, err
 }
 
 func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) error {
+	origin = strings.ToLower(origin)
+
 	id, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(origin)).OnlyID(ctx)
 	if err == nil {
 		_, err = s.dbClient.Mirror.Update().Where(mirror.ID(id)).SetTargetPath(target).Save(ctx)

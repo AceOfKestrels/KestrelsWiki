@@ -12,11 +12,13 @@ const (
 	DB   = "DB"
 )
 
+var logger = log.New(os.Stdout, "", log.LstdFlags)
+
 func Init() {
 	log.SetOutput(os.Stdout)
 }
 
 func Println(prefix string, format string, v ...interface{}) {
-	log.SetPrefix(fmt.Sprintf("[%v] ", prefix))
-	log.Println(fmt.Sprintf(format, v...))
+	logger.SetPrefix(fmt.Sprintf("[%v] ", prefix))
+	logger.Println(fmt.Sprintf(format, v...))
 }
