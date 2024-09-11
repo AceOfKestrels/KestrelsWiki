@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	entgo.io/ent v0.14.1
+	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xiaoqidun/entps v1.32.0
 )

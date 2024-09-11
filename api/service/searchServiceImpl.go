@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	mapset "github.com/deckarep/golang-set/v2"
 	"os"
 	"os/exec"
 	"strconv"
@@ -239,5 +240,39 @@ func (s *SearchServiceImpl) getFileReadingError(fileName string, errorMessage st
 }
 
 func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]string, error) {
-	return []string{}, nil
+	found := mapset.NewSet[string]()
+
+	var errs error
+
+	foundInTitles, err := s.dbClient.File.
+		Query().
+		Where(
+			file.And(
+				file.Not(
+					file.Path(search.CurrentPage)),
+				file.TitleContains(search.SearchString))).
+		All(ctx)
+	if err != nil {
+		errors.Join(errs, err)
+	}
+	for _, f := range foundInTitles {
+		found.Add(f.Path)
+	}
+
+	foundInArticle, err := s.dbClient.File.
+		Query().
+		Where(
+			file.And(
+				file.Not(
+					file.Path(search.CurrentPage)),
+				file.ContentContains(search.SearchString))).
+		All(ctx)
+	if err != nil {
+		errors.Join(errs, err)
+	}
+	for _, f := range foundInArticle {
+		found.Add(f.Path)
+	}
+
+	return found.ToSlice(), errs
 }
