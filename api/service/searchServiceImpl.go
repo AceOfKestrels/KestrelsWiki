@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -31,14 +32,14 @@ func (s *SearchServiceImpl) ContentPath() string {
 func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
 	contentBytes, err := os.ReadFile(s.contentPath + fileName)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return string(contentBytes), nil
 }
 
-func (s *SearchServiceImpl) GetFileDto(ctx context.Context, fileName string) (models.FileDTO, error) {
-	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(ctx)
+func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
+	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(context)
 	if err != nil {
 		return models.FileDTO{}, err
 	}
@@ -53,34 +54,76 @@ func (s *SearchServiceImpl) GetFileDto(ctx context.Context, fileName string) (mo
 	return dto, nil
 }
 
-func (s *SearchServiceImpl) UpdateIndex(ctx context.Context, filePath string) error {
+func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
+	var directories []string
+	directories = append(directories, s.contentPath)
+
+	var errs error
+
+	for len(directories) > 0 {
+		currentDir := directories[0]
+		dirEntries, err := os.ReadDir(currentDir)
+		if err != nil {
+			errors.Join(errs, err)
+			continue
+		}
+
+		files, dirs := s.sortFilesAndDirs(currentDir, dirEntries)
+
+		for _, d := range dirs {
+			directories = append(directories, d)
+		}
+
+		for _, f := range files {
+			errors.Join(errs, s.AddFileToIndex(context, f))
+		}
+
+		directories[0] = directories[len(directories)-1]
+		directories = directories[:len(directories)-1]
+	}
+
+	return errs
+}
+
+func (s *SearchServiceImpl) sortFilesAndDirs(currentPath string, entries []os.DirEntry) (filePaths []string, dirPaths []string) {
+	for _, entry := range entries {
+		if entry.IsDir() {
+			dirPaths = append(dirPaths, currentPath+"/"+entry.Name())
+		} else if strings.HasSuffix(entry.Name(), ".md") {
+			filePaths = append(filePaths, currentPath+"/"+entry.Name())
+		}
+	}
+	return filePaths, dirPaths
+}
+
+func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath string) error {
 	content, err := s.ReadFileContents(filePath)
 	if err != nil {
-		return err
+		return s.getFileReadingError(filePath, err.Error())
 	}
 	if len(content) == 0 {
-		return errors.New("file is empty")
+		return s.getFileReadingError(filePath, "file is empty")
 	}
 
 	article, meta := getArticle(content)
 
 	if meta.MirrorOf != "" {
-		return s.setMirror(filePath, meta.MirrorOf, ctx)
+		return s.setMirror(filePath, meta.MirrorOf, context)
 	}
 
 	if meta.Title == "" {
 		meta.Title, err = getFileTitle(article)
 		if err != nil {
-			return err
+			return s.getFileReadingError(filePath, err.Error())
 		}
 	}
 
 	updated, err := s.getLastModifiedTime(filePath)
 	if err != nil {
-		return err
+		return s.getFileReadingError(filePath, err.Error())
 	}
 
-	return s.setFile(filePath, meta.Title, updated, article, ctx)
+	return s.setFile(filePath, meta.Title, updated, article, context)
 }
 
 func getArticle(fileContent string) (article string, meta models.FileMetaDTO) {
@@ -170,4 +213,8 @@ func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time
 		Save(ctx)
 
 	return err
+}
+
+func (s *SearchServiceImpl) getFileReadingError(fileName string, errorMessage string) error {
+	return fmt.Errorf("error reading file at %v: %v", fileName, errorMessage)
 }

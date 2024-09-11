@@ -35,7 +35,7 @@ func main() {
 	background := context.Background()
 	ctx, cancel := context.WithTimeout(background, 5*time.Second)
 	defer cancel()
-	err = searchService.UpdateIndex(ctx, "README.md")
+	err = searchService.AddFileToIndex(ctx, "README.md")
 	if err != nil {
 		log.Fatal(err)
 	}
