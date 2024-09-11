@@ -2,6 +2,7 @@ package main
 
 import (
 	"api/controller/fileController"
+	"api/controller/searchController"
 	"api/ent"
 	"api/logger"
 	"api/service"
@@ -61,9 +62,11 @@ func main() {
 	}
 	engine := gin.Default()
 
-	controller := fileController.NewFileController(searchService, "/api/file")
+	fileCtrl := fileController.NewFileController(searchService, "/api/file")
+	searchCtrl := searchController.NewSearchController(searchService, "/api/search")
 
-	engine.GET(controller.Path+"/*filepath", controller.GetFile)
+	engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
+	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
 
 	logger.Println(logger.API, "starting web server on port %v", *apiPort)
 	err = engine.Run(fmt.Sprintf("localhost:%v", *apiPort))

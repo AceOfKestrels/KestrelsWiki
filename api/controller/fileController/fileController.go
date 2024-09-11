@@ -1,6 +1,7 @@
 package fileController
 
 import (
+	"api/logger"
 	"api/models"
 	"context"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func (f *FileController) GetFile(c *gin.Context) {
 	filePath := c.Param("filepath")
 	if filePath == "" {
 		c.Status(http.StatusBadRequest)
+		logger.Println(logger.API, "error: filepath was empty")
 		return
 	}
 
@@ -41,6 +43,7 @@ func (f *FileController) GetFile(c *gin.Context) {
 	dto, err := f.searchService.GetFileDto(ctx, filePath[1:]+".md")
 	if err != nil {
 		c.Status(http.StatusNotFound)
+		logger.Println(logger.API, "error finding file: %v", err)
 		return
 	}
 

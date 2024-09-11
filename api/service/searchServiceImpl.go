@@ -237,3 +237,7 @@ func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time
 func (s *SearchServiceImpl) getFileReadingError(fileName string, errorMessage string) error {
 	return fmt.Errorf("error reading file at %v: %v", fileName, errorMessage)
 }
+
+func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]string, error) {
+	return []string{}, nil
+}
