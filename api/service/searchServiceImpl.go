@@ -38,13 +38,14 @@ func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
 	return string(contentBytes), nil
 }
 func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
+	fileName = strings.ToLower(fileName)
 	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(context)
 	if err != nil {
 		return models.FileDTO{}, err
 	}
 
 	dto := models.FileDTO{
-		Path:    fileMeta.Path,
+		Path:    strings.ToLower(fileMeta.Path),
 		Title:   fileMeta.Title,
 		Updated: fileMeta.Updated,
 		Content: fileMeta.Content,
@@ -55,13 +56,16 @@ func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string)
 
 func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 	var directories []string
-	directories = append(directories, s.contentPath)
+	directories = append(directories, "")
 
 	var errs error
 
 	for len(directories) > 0 {
 		currentDir := directories[0]
-		dirEntries, err := os.ReadDir(currentDir)
+		directories[0] = directories[len(directories)-1]
+		directories = directories[:len(directories)-1]
+
+		dirEntries, err := os.ReadDir(s.contentPath + "/" + currentDir)
 		if err != nil {
 			errors.Join(errs, err)
 			continue
@@ -76,9 +80,6 @@ func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 		for _, f := range files {
 			errors.Join(errs, s.AddFileToIndex(context, f))
 		}
-
-		directories[0] = directories[len(directories)-1]
-		directories = directories[:len(directories)-1]
 	}
 
 	return errs
@@ -86,10 +87,19 @@ func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 
 func (s *SearchServiceImpl) sortFilesAndDirs(currentPath string, entries []os.DirEntry) (filePaths []string, dirPaths []string) {
 	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+
+		fullPath := currentPath + "/" + entry.Name()
+		if strings.HasPrefix(fullPath, "/") {
+			fullPath = fullPath[1:]
+		}
+
 		if entry.IsDir() {
-			dirPaths = append(dirPaths, currentPath+"/"+entry.Name())
+			dirPaths = append(dirPaths, fullPath)
 		} else if strings.HasSuffix(entry.Name(), ".md") {
-			filePaths = append(filePaths, currentPath+"/"+entry.Name())
+			filePaths = append(filePaths, fullPath)
 		}
 	}
 	return filePaths, dirPaths
@@ -192,9 +202,11 @@ func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.
 }
 
 func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time, content string, ctx context.Context) error {
+	path = strings.ToLower(path)
+
 	existingId, err := s.dbClient.File.Query().Where(file.Path(path)).OnlyID(ctx)
 
-	if err != nil {
+	if err == nil {
 		_, err = s.dbClient.File.Update().
 			Where(file.ID(existingId)).
 			SetTitle(title).

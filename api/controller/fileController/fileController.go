@@ -53,7 +53,7 @@ func (f *FileController) GetFile(c *gin.Context) {
 		return
 	}
 
-	dto.Path = f.Path + filePath + ".md"
+	dto.Path = f.Path + "/" + dto.Path
 
 	c.JSON(http.StatusOK, dto)
 }

@@ -23,6 +23,7 @@ func main() {
 
 	logger.Println(logger.DB, "attempting to open database at %v", dbPath)
 	dbClient, err := ent.Open("sqlite3", "file:"+dbPath)
+	dbClient = dbClient.Debug()
 	if err != nil {
 		log.Fatal(err)
 	}
