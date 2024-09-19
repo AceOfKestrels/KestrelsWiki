@@ -250,7 +250,7 @@ func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.Searc
 			file.And(
 				file.Not(
 					file.Path(search.CurrentPage)),
-				file.TitleContains(search.SearchString))).
+				file.TitleContainsFold(search.SearchString))).
 		All(ctx)
 	if err != nil {
 		errors.Join(errs, err)
@@ -265,7 +265,7 @@ func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.Searc
 			file.And(
 				file.Not(
 					file.Path(search.CurrentPage)),
-				file.ContentContains(search.SearchString))).
+				file.ContentContainsFold(search.SearchString))).
 		All(ctx)
 	if err != nil {
 		errors.Join(errs, err)
