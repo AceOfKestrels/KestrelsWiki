@@ -1,6 +1,8 @@
 package models
 
 type SearchContext struct {
-	SearchString string
-	CurrentPage  string
+	SearchInContent     bool   `json:"searchInContent"`
+	SearchInSubHeadings bool   `json:"searchInSubHeadings"`
+	SearchString        string `json:"searchString"`
+	CurrentPage         string `json:"currentPage"`
 }

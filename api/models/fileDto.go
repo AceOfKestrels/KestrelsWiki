@@ -7,7 +7,7 @@ type FileDTO struct {
 	Title         string    `json:"title"`
 	Path          string    `json:"path"`
 	Updated       time.Time `json:"updated"`
-	Content       string    `json:"content"`
+	Content       string    `json:"content,omitempty"`
 	Headings      []Heading `json:"headings,omitempty"`
 	IncomingLinks []Link    `json:"links,omitempty"`
 }

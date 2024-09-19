@@ -11,7 +11,7 @@ import (
 
 type SearchService interface {
 	ContentPath() string
-	SearchFiles(ctx context.Context, search models.SearchContext) ([]string, error)
+	SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error)
 }
 
 type SearchController struct {

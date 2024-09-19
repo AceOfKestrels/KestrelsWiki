@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	mapset "github.com/deckarep/golang-set/v2"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -239,8 +239,8 @@ func (s *SearchServiceImpl) getFileReadingError(fileName string, errorMessage st
 	return fmt.Errorf("error reading file at %v: %v", fileName, errorMessage)
 }
 
-func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]string, error) {
-	found := mapset.NewSet[string]()
+func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error) {
+	found := make(map[string]models.FileDTO)
 
 	var errs error
 
@@ -256,7 +256,13 @@ func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.Searc
 		errors.Join(errs, err)
 	}
 	for _, f := range foundInTitles {
-		found.Add(f.Path)
+		found[f.Path] = models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated}
+	}
+
+	result := s.valuesAsSlice(found)
+
+	if !search.SearchInContent {
+		return result, err
 	}
 
 	foundInArticle, err := s.dbClient.File.
@@ -271,8 +277,20 @@ func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.Searc
 		errors.Join(errs, err)
 	}
 	for _, f := range foundInArticle {
-		found.Add(f.Path)
+		if _, exists := found[f.Path]; !exists {
+			result = append(result, models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated})
+		}
 	}
 
-	return found.ToSlice(), errs
+	return result, errs
+}
+
+func (s *SearchServiceImpl) valuesAsSlice(values map[string]models.FileDTO) (slice []models.FileDTO) {
+	for _, value := range values {
+		slice = append(slice, value)
+	}
+
+	slices.SortStableFunc(slice, func(a, b models.FileDTO) int { return len(a.Title) - len(b.Title) })
+
+	return slice
 }
