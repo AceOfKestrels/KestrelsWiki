@@ -17,6 +17,10 @@ const (
 	FieldTitle = "title"
 	// FieldUpdated holds the string denoting the updated field in the database.
 	FieldUpdated = "updated"
+	// FieldAuthor holds the string denoting the author field in the database.
+	FieldAuthor = "author"
+	// FieldCommitHash holds the string denoting the commithash field in the database.
+	FieldCommitHash = "commit_hash"
 	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
 	// Table holds the table name of the file in the database.
@@ -29,6 +33,8 @@ var Columns = []string{
 	FieldPath,
 	FieldTitle,
 	FieldUpdated,
+	FieldAuthor,
+	FieldCommitHash,
 	FieldContent,
 }
 
@@ -63,6 +69,16 @@ func ByTitle(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdated orders the results by the updated field.
 func ByUpdated(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdated, opts...).ToFunc()
+}
+
+// ByAuthor orders the results by the author field.
+func ByAuthor(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAuthor, opts...).ToFunc()
+}
+
+// ByCommitHash orders the results by the commitHash field.
+func ByCommitHash(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommitHash, opts...).ToFunc()
 }
 
 // ByContent orders the results by the content field.

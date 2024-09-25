@@ -38,6 +38,18 @@ func (fc *FileCreate) SetUpdated(t time.Time) *FileCreate {
 	return fc
 }
 
+// SetAuthor sets the "author" field.
+func (fc *FileCreate) SetAuthor(s string) *FileCreate {
+	fc.mutation.SetAuthor(s)
+	return fc
+}
+
+// SetCommitHash sets the "commitHash" field.
+func (fc *FileCreate) SetCommitHash(s string) *FileCreate {
+	fc.mutation.SetCommitHash(s)
+	return fc
+}
+
 // SetContent sets the "content" field.
 func (fc *FileCreate) SetContent(s string) *FileCreate {
 	fc.mutation.SetContent(s)
@@ -87,6 +99,12 @@ func (fc *FileCreate) check() error {
 	if _, ok := fc.mutation.Updated(); !ok {
 		return &ValidationError{Name: "updated", err: errors.New(`ent: missing required field "File.updated"`)}
 	}
+	if _, ok := fc.mutation.Author(); !ok {
+		return &ValidationError{Name: "author", err: errors.New(`ent: missing required field "File.author"`)}
+	}
+	if _, ok := fc.mutation.CommitHash(); !ok {
+		return &ValidationError{Name: "commitHash", err: errors.New(`ent: missing required field "File.commitHash"`)}
+	}
 	if _, ok := fc.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "File.content"`)}
 	}
@@ -127,6 +145,14 @@ func (fc *FileCreate) createSpec() (*File, *sqlgraph.CreateSpec) {
 	if value, ok := fc.mutation.Updated(); ok {
 		_spec.SetField(file.FieldUpdated, field.TypeTime, value)
 		_node.Updated = value
+	}
+	if value, ok := fc.mutation.Author(); ok {
+		_spec.SetField(file.FieldAuthor, field.TypeString, value)
+		_node.Author = value
+	}
+	if value, ok := fc.mutation.CommitHash(); ok {
+		_spec.SetField(file.FieldCommitHash, field.TypeString, value)
+		_node.CommitHash = value
 	}
 	if value, ok := fc.mutation.Content(); ok {
 		_spec.SetField(file.FieldContent, field.TypeString, value)

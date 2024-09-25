@@ -209,11 +209,12 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 	existingId, err := s.dbClient.File.Query().Where(file.Path(path)).OnlyID(ctx)
 
 	if err == nil {
-		_, err = s.dbClient.File.Update().
-			Where(file.ID(existingId)).
+		_, err = s.dbClient.File.UpdateOneID(existingId).
 			SetTitle(title).
 			SetContent(content).
 			SetUpdated(commitData.Date).
+			SetAuthor(commitData.Author).
+			SetCommitHash(commitData.Hash).
 			Save(ctx)
 		return err
 	}
@@ -223,6 +224,8 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 		SetTitle(title).
 		SetContent(content).
 		SetUpdated(commitData.Date).
+		SetAuthor(commitData.Author).
+		SetCommitHash(commitData.Hash).
 		Save(ctx)
 
 	return err

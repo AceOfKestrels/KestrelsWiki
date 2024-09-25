@@ -38,6 +38,8 @@ type FileMutation struct {
 	_path         *string
 	title         *string
 	updated       *time.Time
+	author        *string
+	commitHash    *string
 	content       *string
 	clearedFields map[string]struct{}
 	done          bool
@@ -251,6 +253,78 @@ func (m *FileMutation) ResetUpdated() {
 	m.updated = nil
 }
 
+// SetAuthor sets the "author" field.
+func (m *FileMutation) SetAuthor(s string) {
+	m.author = &s
+}
+
+// Author returns the value of the "author" field in the mutation.
+func (m *FileMutation) Author() (r string, exists bool) {
+	v := m.author
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthor returns the old "author" field's value of the File entity.
+// If the File object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FileMutation) OldAuthor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthor: %w", err)
+	}
+	return oldValue.Author, nil
+}
+
+// ResetAuthor resets all changes to the "author" field.
+func (m *FileMutation) ResetAuthor() {
+	m.author = nil
+}
+
+// SetCommitHash sets the "commitHash" field.
+func (m *FileMutation) SetCommitHash(s string) {
+	m.commitHash = &s
+}
+
+// CommitHash returns the value of the "commitHash" field in the mutation.
+func (m *FileMutation) CommitHash() (r string, exists bool) {
+	v := m.commitHash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitHash returns the old "commitHash" field's value of the File entity.
+// If the File object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FileMutation) OldCommitHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitHash: %w", err)
+	}
+	return oldValue.CommitHash, nil
+}
+
+// ResetCommitHash resets all changes to the "commitHash" field.
+func (m *FileMutation) ResetCommitHash() {
+	m.commitHash = nil
+}
+
 // SetContent sets the "content" field.
 func (m *FileMutation) SetContent(s string) {
 	m.content = &s
@@ -321,7 +395,7 @@ func (m *FileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FileMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m._path != nil {
 		fields = append(fields, file.FieldPath)
 	}
@@ -330,6 +404,12 @@ func (m *FileMutation) Fields() []string {
 	}
 	if m.updated != nil {
 		fields = append(fields, file.FieldUpdated)
+	}
+	if m.author != nil {
+		fields = append(fields, file.FieldAuthor)
+	}
+	if m.commitHash != nil {
+		fields = append(fields, file.FieldCommitHash)
 	}
 	if m.content != nil {
 		fields = append(fields, file.FieldContent)
@@ -348,6 +428,10 @@ func (m *FileMutation) Field(name string) (ent.Value, bool) {
 		return m.Title()
 	case file.FieldUpdated:
 		return m.Updated()
+	case file.FieldAuthor:
+		return m.Author()
+	case file.FieldCommitHash:
+		return m.CommitHash()
 	case file.FieldContent:
 		return m.Content()
 	}
@@ -365,6 +449,10 @@ func (m *FileMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldTitle(ctx)
 	case file.FieldUpdated:
 		return m.OldUpdated(ctx)
+	case file.FieldAuthor:
+		return m.OldAuthor(ctx)
+	case file.FieldCommitHash:
+		return m.OldCommitHash(ctx)
 	case file.FieldContent:
 		return m.OldContent(ctx)
 	}
@@ -396,6 +484,20 @@ func (m *FileMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdated(v)
+		return nil
+	case file.FieldAuthor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthor(v)
+		return nil
+	case file.FieldCommitHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitHash(v)
 		return nil
 	case file.FieldContent:
 		v, ok := value.(string)
@@ -461,6 +563,12 @@ func (m *FileMutation) ResetField(name string) error {
 		return nil
 	case file.FieldUpdated:
 		m.ResetUpdated()
+		return nil
+	case file.FieldAuthor:
+		m.ResetAuthor()
+		return nil
+	case file.FieldCommitHash:
+		m.ResetCommitHash()
 		return nil
 	case file.FieldContent:
 		m.ResetContent()

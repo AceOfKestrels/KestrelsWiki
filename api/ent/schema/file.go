@@ -16,6 +16,8 @@ func (File) Fields() []ent.Field {
 		field.String("path").Unique(),
 		field.String("title"),
 		field.Time("updated"),
+		field.String("author"),
+		field.String("commitHash"),
 		field.String("content"),
 	}
 }

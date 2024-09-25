@@ -23,6 +23,10 @@ type File struct {
 	Title string `json:"title,omitempty"`
 	// Updated holds the value of the "updated" field.
 	Updated time.Time `json:"updated,omitempty"`
+	// Author holds the value of the "author" field.
+	Author string `json:"author,omitempty"`
+	// CommitHash holds the value of the "commitHash" field.
+	CommitHash string `json:"commitHash,omitempty"`
 	// Content holds the value of the "content" field.
 	Content      string `json:"content,omitempty"`
 	selectValues sql.SelectValues
@@ -35,7 +39,7 @@ func (*File) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case file.FieldID:
 			values[i] = new(sql.NullInt64)
-		case file.FieldPath, file.FieldTitle, file.FieldContent:
+		case file.FieldPath, file.FieldTitle, file.FieldAuthor, file.FieldCommitHash, file.FieldContent:
 			values[i] = new(sql.NullString)
 		case file.FieldUpdated:
 			values[i] = new(sql.NullTime)
@@ -77,6 +81,18 @@ func (f *File) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated", values[i])
 			} else if value.Valid {
 				f.Updated = value.Time
+			}
+		case file.FieldAuthor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field author", values[i])
+			} else if value.Valid {
+				f.Author = value.String
+			}
+		case file.FieldCommitHash:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field commitHash", values[i])
+			} else if value.Valid {
+				f.CommitHash = value.String
 			}
 		case file.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -128,6 +144,12 @@ func (f *File) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated=")
 	builder.WriteString(f.Updated.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("author=")
+	builder.WriteString(f.Author)
+	builder.WriteString(", ")
+	builder.WriteString("commitHash=")
+	builder.WriteString(f.CommitHash)
 	builder.WriteString(", ")
 	builder.WriteString("content=")
 	builder.WriteString(f.Content)

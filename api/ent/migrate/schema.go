@@ -14,6 +14,8 @@ var (
 		{Name: "path", Type: field.TypeString, Unique: true},
 		{Name: "title", Type: field.TypeString},
 		{Name: "updated", Type: field.TypeTime},
+		{Name: "author", Type: field.TypeString},
+		{Name: "commit_hash", Type: field.TypeString},
 		{Name: "content", Type: field.TypeString},
 	}
 	// FilesTable holds the schema information for the "files" table.

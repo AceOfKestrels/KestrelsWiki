@@ -70,6 +70,34 @@ func (fu *FileUpdate) SetNillableUpdated(t *time.Time) *FileUpdate {
 	return fu
 }
 
+// SetAuthor sets the "author" field.
+func (fu *FileUpdate) SetAuthor(s string) *FileUpdate {
+	fu.mutation.SetAuthor(s)
+	return fu
+}
+
+// SetNillableAuthor sets the "author" field if the given value is not nil.
+func (fu *FileUpdate) SetNillableAuthor(s *string) *FileUpdate {
+	if s != nil {
+		fu.SetAuthor(*s)
+	}
+	return fu
+}
+
+// SetCommitHash sets the "commitHash" field.
+func (fu *FileUpdate) SetCommitHash(s string) *FileUpdate {
+	fu.mutation.SetCommitHash(s)
+	return fu
+}
+
+// SetNillableCommitHash sets the "commitHash" field if the given value is not nil.
+func (fu *FileUpdate) SetNillableCommitHash(s *string) *FileUpdate {
+	if s != nil {
+		fu.SetCommitHash(*s)
+	}
+	return fu
+}
+
 // SetContent sets the "content" field.
 func (fu *FileUpdate) SetContent(s string) *FileUpdate {
 	fu.mutation.SetContent(s)
@@ -134,6 +162,12 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := fu.mutation.Updated(); ok {
 		_spec.SetField(file.FieldUpdated, field.TypeTime, value)
 	}
+	if value, ok := fu.mutation.Author(); ok {
+		_spec.SetField(file.FieldAuthor, field.TypeString, value)
+	}
+	if value, ok := fu.mutation.CommitHash(); ok {
+		_spec.SetField(file.FieldCommitHash, field.TypeString, value)
+	}
 	if value, ok := fu.mutation.Content(); ok {
 		_spec.SetField(file.FieldContent, field.TypeString, value)
 	}
@@ -195,6 +229,34 @@ func (fuo *FileUpdateOne) SetUpdated(t time.Time) *FileUpdateOne {
 func (fuo *FileUpdateOne) SetNillableUpdated(t *time.Time) *FileUpdateOne {
 	if t != nil {
 		fuo.SetUpdated(*t)
+	}
+	return fuo
+}
+
+// SetAuthor sets the "author" field.
+func (fuo *FileUpdateOne) SetAuthor(s string) *FileUpdateOne {
+	fuo.mutation.SetAuthor(s)
+	return fuo
+}
+
+// SetNillableAuthor sets the "author" field if the given value is not nil.
+func (fuo *FileUpdateOne) SetNillableAuthor(s *string) *FileUpdateOne {
+	if s != nil {
+		fuo.SetAuthor(*s)
+	}
+	return fuo
+}
+
+// SetCommitHash sets the "commitHash" field.
+func (fuo *FileUpdateOne) SetCommitHash(s string) *FileUpdateOne {
+	fuo.mutation.SetCommitHash(s)
+	return fuo
+}
+
+// SetNillableCommitHash sets the "commitHash" field if the given value is not nil.
+func (fuo *FileUpdateOne) SetNillableCommitHash(s *string) *FileUpdateOne {
+	if s != nil {
+		fuo.SetCommitHash(*s)
 	}
 	return fuo
 }
@@ -292,6 +354,12 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) 
 	}
 	if value, ok := fuo.mutation.Updated(); ok {
 		_spec.SetField(file.FieldUpdated, field.TypeTime, value)
+	}
+	if value, ok := fuo.mutation.Author(); ok {
+		_spec.SetField(file.FieldAuthor, field.TypeString, value)
+	}
+	if value, ok := fuo.mutation.CommitHash(); ok {
+		_spec.SetField(file.FieldCommitHash, field.TypeString, value)
 	}
 	if value, ok := fuo.mutation.Content(); ok {
 		_spec.SetField(file.FieldContent, field.TypeString, value)

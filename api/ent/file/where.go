@@ -69,6 +69,16 @@ func Updated(v time.Time) predicate.File {
 	return predicate.File(sql.FieldEQ(FieldUpdated, v))
 }
 
+// Author applies equality check predicate on the "author" field. It's identical to AuthorEQ.
+func Author(v string) predicate.File {
+	return predicate.File(sql.FieldEQ(FieldAuthor, v))
+}
+
+// CommitHash applies equality check predicate on the "commitHash" field. It's identical to CommitHashEQ.
+func CommitHash(v string) predicate.File {
+	return predicate.File(sql.FieldEQ(FieldCommitHash, v))
+}
+
 // Content applies equality check predicate on the "content" field. It's identical to ContentEQ.
 func Content(v string) predicate.File {
 	return predicate.File(sql.FieldEQ(FieldContent, v))
@@ -242,6 +252,136 @@ func UpdatedLT(v time.Time) predicate.File {
 // UpdatedLTE applies the LTE predicate on the "updated" field.
 func UpdatedLTE(v time.Time) predicate.File {
 	return predicate.File(sql.FieldLTE(FieldUpdated, v))
+}
+
+// AuthorEQ applies the EQ predicate on the "author" field.
+func AuthorEQ(v string) predicate.File {
+	return predicate.File(sql.FieldEQ(FieldAuthor, v))
+}
+
+// AuthorNEQ applies the NEQ predicate on the "author" field.
+func AuthorNEQ(v string) predicate.File {
+	return predicate.File(sql.FieldNEQ(FieldAuthor, v))
+}
+
+// AuthorIn applies the In predicate on the "author" field.
+func AuthorIn(vs ...string) predicate.File {
+	return predicate.File(sql.FieldIn(FieldAuthor, vs...))
+}
+
+// AuthorNotIn applies the NotIn predicate on the "author" field.
+func AuthorNotIn(vs ...string) predicate.File {
+	return predicate.File(sql.FieldNotIn(FieldAuthor, vs...))
+}
+
+// AuthorGT applies the GT predicate on the "author" field.
+func AuthorGT(v string) predicate.File {
+	return predicate.File(sql.FieldGT(FieldAuthor, v))
+}
+
+// AuthorGTE applies the GTE predicate on the "author" field.
+func AuthorGTE(v string) predicate.File {
+	return predicate.File(sql.FieldGTE(FieldAuthor, v))
+}
+
+// AuthorLT applies the LT predicate on the "author" field.
+func AuthorLT(v string) predicate.File {
+	return predicate.File(sql.FieldLT(FieldAuthor, v))
+}
+
+// AuthorLTE applies the LTE predicate on the "author" field.
+func AuthorLTE(v string) predicate.File {
+	return predicate.File(sql.FieldLTE(FieldAuthor, v))
+}
+
+// AuthorContains applies the Contains predicate on the "author" field.
+func AuthorContains(v string) predicate.File {
+	return predicate.File(sql.FieldContains(FieldAuthor, v))
+}
+
+// AuthorHasPrefix applies the HasPrefix predicate on the "author" field.
+func AuthorHasPrefix(v string) predicate.File {
+	return predicate.File(sql.FieldHasPrefix(FieldAuthor, v))
+}
+
+// AuthorHasSuffix applies the HasSuffix predicate on the "author" field.
+func AuthorHasSuffix(v string) predicate.File {
+	return predicate.File(sql.FieldHasSuffix(FieldAuthor, v))
+}
+
+// AuthorEqualFold applies the EqualFold predicate on the "author" field.
+func AuthorEqualFold(v string) predicate.File {
+	return predicate.File(sql.FieldEqualFold(FieldAuthor, v))
+}
+
+// AuthorContainsFold applies the ContainsFold predicate on the "author" field.
+func AuthorContainsFold(v string) predicate.File {
+	return predicate.File(sql.FieldContainsFold(FieldAuthor, v))
+}
+
+// CommitHashEQ applies the EQ predicate on the "commitHash" field.
+func CommitHashEQ(v string) predicate.File {
+	return predicate.File(sql.FieldEQ(FieldCommitHash, v))
+}
+
+// CommitHashNEQ applies the NEQ predicate on the "commitHash" field.
+func CommitHashNEQ(v string) predicate.File {
+	return predicate.File(sql.FieldNEQ(FieldCommitHash, v))
+}
+
+// CommitHashIn applies the In predicate on the "commitHash" field.
+func CommitHashIn(vs ...string) predicate.File {
+	return predicate.File(sql.FieldIn(FieldCommitHash, vs...))
+}
+
+// CommitHashNotIn applies the NotIn predicate on the "commitHash" field.
+func CommitHashNotIn(vs ...string) predicate.File {
+	return predicate.File(sql.FieldNotIn(FieldCommitHash, vs...))
+}
+
+// CommitHashGT applies the GT predicate on the "commitHash" field.
+func CommitHashGT(v string) predicate.File {
+	return predicate.File(sql.FieldGT(FieldCommitHash, v))
+}
+
+// CommitHashGTE applies the GTE predicate on the "commitHash" field.
+func CommitHashGTE(v string) predicate.File {
+	return predicate.File(sql.FieldGTE(FieldCommitHash, v))
+}
+
+// CommitHashLT applies the LT predicate on the "commitHash" field.
+func CommitHashLT(v string) predicate.File {
+	return predicate.File(sql.FieldLT(FieldCommitHash, v))
+}
+
+// CommitHashLTE applies the LTE predicate on the "commitHash" field.
+func CommitHashLTE(v string) predicate.File {
+	return predicate.File(sql.FieldLTE(FieldCommitHash, v))
+}
+
+// CommitHashContains applies the Contains predicate on the "commitHash" field.
+func CommitHashContains(v string) predicate.File {
+	return predicate.File(sql.FieldContains(FieldCommitHash, v))
+}
+
+// CommitHashHasPrefix applies the HasPrefix predicate on the "commitHash" field.
+func CommitHashHasPrefix(v string) predicate.File {
+	return predicate.File(sql.FieldHasPrefix(FieldCommitHash, v))
+}
+
+// CommitHashHasSuffix applies the HasSuffix predicate on the "commitHash" field.
+func CommitHashHasSuffix(v string) predicate.File {
+	return predicate.File(sql.FieldHasSuffix(FieldCommitHash, v))
+}
+
+// CommitHashEqualFold applies the EqualFold predicate on the "commitHash" field.
+func CommitHashEqualFold(v string) predicate.File {
+	return predicate.File(sql.FieldEqualFold(FieldCommitHash, v))
+}
+
+// CommitHashContainsFold applies the ContainsFold predicate on the "commitHash" field.
+func CommitHashContainsFold(v string) predicate.File {
+	return predicate.File(sql.FieldContainsFold(FieldCommitHash, v))
 }
 
 // ContentEQ applies the EQ predicate on the "content" field.
