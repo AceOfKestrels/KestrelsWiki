@@ -12,9 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"slices"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type SearchServiceImpl struct {
@@ -134,12 +132,12 @@ func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath str
 		}
 	}
 
-	updated, err := s.getLastModifiedTime(filePath)
+	commitData, err := s.getCommitData(filePath)
 	if err != nil {
 		return s.getFileReadingError(filePath, err.Error())
 	}
 
-	return s.setFile(filePath, meta.Title, updated, article, context)
+	return s.setFile(filePath, meta.Title, commitData, article, context)
 }
 
 func getArticle(fileContent string) (article string, meta models.FileMetaDTO) {
@@ -177,22 +175,17 @@ func getFileTitle(content string) (string, error) {
 	return "", errors.New("no title found")
 }
 
-func (s *SearchServiceImpl) getLastModifiedTime(filePath string) (time.Time, error) {
-	cmd := exec.Command("git", "log", "-1", "--format=%ct", filePath)
+func (s *SearchServiceImpl) getCommitData(filePath string) (commitData models.CommitData, err error) {
+	cmd := exec.Command("git", "log", "-1", `--pretty=format:{"hash": "%H", "date": "%ad", "author": "%an"}`, "--date=iso-strict", filePath)
 	cmd.Dir = s.contentPath
 
 	output, err := cmd.Output()
 	if err != nil {
-		return time.Time{}, err
+		return
 	}
 
-	timestampStr := strings.Trim(string(output), "\n")
-	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return time.Unix(timestamp, 0), nil
+	commitData, err = models.ParseCommitData(output)
+	return
 }
 
 func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) error {
@@ -210,7 +203,7 @@ func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.
 	return err
 }
 
-func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time, content string, ctx context.Context) error {
+func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) error {
 	path = strings.ToLower(path)
 
 	existingId, err := s.dbClient.File.Query().Where(file.Path(path)).OnlyID(ctx)
@@ -220,7 +213,7 @@ func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time
 			Where(file.ID(existingId)).
 			SetTitle(title).
 			SetContent(content).
-			SetUpdated(updated).
+			SetUpdated(commitData.Date).
 			Save(ctx)
 		return err
 	}
@@ -229,7 +222,7 @@ func (s *SearchServiceImpl) setFile(path string, title string, updated time.Time
 		SetPath(path).
 		SetTitle(title).
 		SetContent(content).
-		SetUpdated(updated).
+		SetUpdated(commitData.Date).
 		Save(ctx)
 
 	return err
