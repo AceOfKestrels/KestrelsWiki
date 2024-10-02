@@ -4,6 +4,7 @@ import (
 	"api/db/ent"
 	"api/db/ent/file"
 	"api/db/ent/mirror"
+	"api/db/ent/predicate"
 	"api/models"
 	"api/service/helper"
 	"context"
@@ -140,57 +141,53 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 }
 
 func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error) {
-	found := make(map[string]models.FileDTO)
-
-	var errs error
-
-	foundInTitles, err := s.dbClient.File.
-		Query().
-		Where(
-			file.And(
-				file.Not(
-					file.Path(search.CurrentPage)),
-				file.TitleContainsFold(search.SearchString))).
-		All(ctx)
+	found, result, err := s.searchFiles(ctx, map[string]bool{},
+		file.And(
+			file.Not(
+				file.Path(search.CurrentPage)),
+			file.TitleContainsFold(search.SearchString)))
 	if err != nil {
-		errors.Join(errs, err)
+		return nil, err
 	}
-	for _, f := range foundInTitles {
-		found[f.Path] = models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated}
-	}
-
-	result := s.valuesAsSlice(found)
 
 	if !search.SearchInContent {
-		return result, err
+		return result, nil
 	}
 
-	foundInArticle, err := s.dbClient.File.
-		Query().
-		Where(
-			file.And(
-				file.Not(
-					file.Path(search.CurrentPage)),
-				file.ContentContainsFold(search.SearchString))).
-		All(ctx)
+	paths, files, err := s.searchFiles(ctx, found,
+		file.And(
+			file.Not(
+				file.Path(search.CurrentPage)),
+			file.ContentContainsFold(search.SearchString)))
 	if err != nil {
-		errors.Join(errs, err)
+		return nil, err
 	}
-	for _, f := range foundInArticle {
-		if _, exists := found[f.Path]; !exists {
-			result = append(result, models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated})
+	result = append(result, files...)
+	found = s.addAllToMap(found, paths)
+
+	return result, nil
+}
+
+func (s *SearchServiceImpl) searchFiles(ctx context.Context, alreadyFound map[string]bool, predicate predicate.File) (pathsFound map[string]bool, dtos []models.FileDTO, err error) {
+	found, err := s.dbClient.File.Query().Where(predicate).All(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, f := range found {
+		if _, exists := alreadyFound[f.Path]; !exists {
+			alreadyFound[f.Path] = true
+			dtos = append(dtos, models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated})
 		}
 	}
 
-	return result, errs
+	slices.SortStableFunc(dtos, func(a, b models.FileDTO) int { return len(a.Title) - len(b.Title) })
+
+	return pathsFound, dtos, nil
 }
 
-func (s *SearchServiceImpl) valuesAsSlice(values map[string]models.FileDTO) (slice []models.FileDTO) {
-	for _, value := range values {
-		slice = append(slice, value)
+func (s *SearchServiceImpl) addAllToMap(old map[string]bool, add map[string]bool) (result map[string]bool) {
+	for key, value := range add {
+		old[key] = value
 	}
-
-	slices.SortStableFunc(slice, func(a, b models.FileDTO) int { return len(a.Title) - len(b.Title) })
-
-	return slice
+	return old
 }
