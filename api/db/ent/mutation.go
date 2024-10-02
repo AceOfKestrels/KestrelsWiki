@@ -3,9 +3,9 @@
 package ent
 
 import (
-	"api/ent/file"
-	"api/ent/mirror"
-	"api/ent/predicate"
+	"api/db/ent/file"
+	"api/db/ent/mirror"
+	"api/db/ent/predicate"
 	"context"
 	"errors"
 	"fmt"

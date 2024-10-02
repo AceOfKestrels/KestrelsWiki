@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"api/ent/mirror"
-	"api/ent/predicate"
+	"api/db/ent/mirror"
+	"api/db/ent/predicate"
 	"context"
 
 	"entgo.io/ent/dialect/sql"

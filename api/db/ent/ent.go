@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"api/ent/file"
-	"api/ent/mirror"
+	"api/db/ent/file"
+	"api/db/ent/mirror"
 	"context"
 	"errors"
 	"fmt"

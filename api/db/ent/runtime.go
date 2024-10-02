@@ -3,9 +3,9 @@
 package ent
 
 import (
-	"api/ent/file"
-	"api/ent/mirror"
-	"api/ent/schema"
+	"api/db/ent/file"
+	"api/db/ent/mirror"
+	"api/db/schema"
 )
 
 // The init function reads all schema descriptors with runtime code

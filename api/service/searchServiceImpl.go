@@ -1,9 +1,9 @@
 package service
 
 import (
-	"api/ent"
-	"api/ent/file"
-	"api/ent/mirror"
+	"api/db/ent"
+	"api/db/ent/file"
+	"api/db/ent/mirror"
 	"api/models"
 	"api/service/helper"
 	"context"

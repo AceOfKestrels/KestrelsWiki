@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"api/ent/mirror"
+	"api/db/ent/mirror"
 	"fmt"
 	"strings"
 

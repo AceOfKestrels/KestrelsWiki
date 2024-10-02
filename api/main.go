@@ -3,7 +3,7 @@ package main
 import (
 	"api/controller/fileController"
 	"api/controller/searchController"
-	"api/ent"
+	"api/db/ent"
 	"api/logger"
 	"api/service"
 	"context"

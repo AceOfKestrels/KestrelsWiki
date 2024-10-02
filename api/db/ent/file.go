@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"api/ent/file"
+	"api/db/ent/file"
 	"fmt"
 	"strings"
 	"time"

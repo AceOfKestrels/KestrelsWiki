@@ -5,11 +5,11 @@ package enttest
 import (
 	"context"
 
-	"api/ent"
+	"api/db/ent"
 	// required by schema hooks.
-	_ "api/ent/runtime"
+	_ "api/db/ent/runtime"
 
-	"api/ent/migrate"
+	"api/db/ent/migrate"
 
 	"entgo.io/ent/dialect/sql/schema"
 )

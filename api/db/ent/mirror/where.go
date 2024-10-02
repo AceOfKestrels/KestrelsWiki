@@ -3,7 +3,7 @@
 package mirror
 
 import (
-	"api/ent/predicate"
+	"api/db/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 )

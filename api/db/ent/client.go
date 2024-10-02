@@ -9,10 +9,10 @@ import (
 	"log"
 	"reflect"
 
-	"api/ent/migrate"
+	"api/db/ent/migrate"
 
-	"api/ent/file"
-	"api/ent/mirror"
+	"api/db/ent/file"
+	"api/db/ent/mirror"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
