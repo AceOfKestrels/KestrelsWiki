@@ -5,12 +5,10 @@ import (
 	"api/ent/file"
 	"api/ent/mirror"
 	"api/models"
+	"api/service/helper"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"slices"
 	"strings"
 )
@@ -28,14 +26,6 @@ func (s *SearchServiceImpl) ContentPath() string {
 	return s.contentPath
 }
 
-func (s *SearchServiceImpl) ReadFileContents(fileName string) (string, error) {
-	contentBytes, err := os.ReadFile(s.contentPath + fileName)
-	if err != nil {
-		return "", err
-	}
-
-	return string(contentBytes), nil
-}
 func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
 	fileName = strings.ToLower(fileName)
 
@@ -76,7 +66,7 @@ func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 			continue
 		}
 
-		files, dirs := s.sortFilesAndDirs(currentDir, dirEntries)
+		files, dirs := helper.GetFilesAndDirs(currentDir, dirEntries)
 
 		for _, d := range dirs {
 			directories = append(directories, d)
@@ -90,133 +80,61 @@ func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 	return errs
 }
 
-func (s *SearchServiceImpl) sortFilesAndDirs(currentPath string, entries []os.DirEntry) (filePaths []string, dirPaths []string) {
-	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), ".") {
-			continue
-		}
-
-		fullPath := currentPath + "/" + entry.Name()
-		if strings.HasPrefix(fullPath, "/") {
-			fullPath = fullPath[1:]
-		}
-
-		if entry.IsDir() {
-			dirPaths = append(dirPaths, fullPath)
-		} else if strings.HasSuffix(entry.Name(), ".md") {
-			filePaths = append(filePaths, fullPath)
-		}
-	}
-	return filePaths, dirPaths
-}
-
 func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath string) error {
-	content, err := s.ReadFileContents(filePath)
+	content, err := helper.ReadFileContents(s.contentPath + filePath)
 	if err != nil {
-		return s.getFileReadingError(filePath, err.Error())
+		return helper.GetFileReadingError(filePath, err.Error())
 	}
 	if len(content) == 0 {
-		return s.getFileReadingError(filePath, "file is empty")
+		return helper.GetFileReadingError(filePath, "file is empty")
 	}
 
-	article, meta := getArticle(content)
+	article, meta := helper.GetArticle(content)
 
 	if meta.MirrorOf != "" {
 		return s.setMirror(filePath, meta.MirrorOf, context)
 	}
 
 	if meta.Title == "" {
-		meta.Title, err = getFileTitle(article)
+		meta.Title, err = helper.GetArticleTitle(article)
 		if err != nil {
-			return s.getFileReadingError(filePath, err.Error())
+			return helper.GetFileReadingError(filePath, err.Error())
 		}
 	}
 
-	commitData, err := s.getCommitData(filePath)
+	commitData, err := helper.GetCommitData(filePath, s.contentPath)
 	if err != nil {
-		return s.getFileReadingError(filePath, err.Error())
+		return helper.GetFileReadingError(filePath, err.Error())
 	}
 
 	return s.setFile(filePath, meta.Title, commitData, article, context)
 }
 
-func getArticle(fileContent string) (article string, meta models.FileMetaDTO) {
-	firstLine := fileContent
-	if split := strings.Split(fileContent, "\n"); len(split) != 0 {
-		firstLine = split[0]
-	}
+func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) (err error) {
+	origin = strings.ToLower(origin)
 
-	if err := json.Unmarshal([]byte(firstLine), &meta); err == nil {
-		article = fileContent[len(firstLine)-1 : len(fileContent)-1]
-	} else {
-		article = fileContent
-		meta = models.FileMetaDTO{}
-	}
-
-	return article, meta
-}
-
-func getFileTitle(content string) (string, error) {
-	lines := strings.Split(content, "\n")
-
-	for _, line := range lines {
-		lineTrimmed := strings.TrimSpace(line)
-		if len(lineTrimmed) == 0 {
-			continue
-		}
-
-		if strings.HasPrefix(line, "# ") {
-			return strings.Trim(line[2:len(line)-1], " "), nil
-		}
-
-		break
-	}
-
-	return "", errors.New("no title found")
-}
-
-func (s *SearchServiceImpl) getCommitData(filePath string) (commitData models.CommitData, err error) {
-	cmd := exec.Command("git", "log", "-1", `--pretty=format:{"hash": "%H", "date": "%ad", "author": "%an"}`, "--date=iso-strict", filePath)
-	cmd.Dir = s.contentPath
-
-	output, err := cmd.Output()
-	if err != nil {
+	_, err = s.dbClient.Mirror.Update().Where(mirror.OriginPath(origin)).SetTargetPath(target).Save(ctx)
+	if !ent.IsNotFound(err) {
 		return
 	}
 
-	commitData, err = models.ParseCommitData(output)
+	_, err = s.dbClient.Mirror.Create().SetOriginPath(origin).SetTargetPath(target).Save(ctx)
 	return
 }
 
-func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) error {
-	origin = strings.ToLower(origin)
-
-	id, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(origin)).OnlyID(ctx)
-	if err == nil {
-		_, err = s.dbClient.Mirror.Update().Where(mirror.ID(id)).SetTargetPath(target).Save(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = s.dbClient.Mirror.Create().SetOriginPath(origin).SetTargetPath(target).Save(ctx)
-	return err
-}
-
-func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) error {
+func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) (err error) {
 	path = strings.ToLower(path)
 
-	existingId, err := s.dbClient.File.Query().Where(file.Path(path)).OnlyID(ctx)
-
-	if err == nil {
-		_, err = s.dbClient.File.UpdateOneID(existingId).
-			SetTitle(title).
-			SetContent(content).
-			SetUpdated(commitData.Date).
-			SetAuthor(commitData.Author).
-			SetCommitHash(commitData.Hash).
-			Save(ctx)
-		return err
+	_, err = s.dbClient.File.Update().
+		Where(file.Path(path)).
+		SetTitle(title).
+		SetContent(content).
+		SetUpdated(commitData.Date).
+		SetAuthor(commitData.Author).
+		SetCommitHash(commitData.Hash).
+		Save(ctx)
+	if !ent.IsNotFound(err) {
+		return
 	}
 
 	_, err = s.dbClient.File.Create().
@@ -228,11 +146,7 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 		SetCommitHash(commitData.Hash).
 		Save(ctx)
 
-	return err
-}
-
-func (s *SearchServiceImpl) getFileReadingError(fileName string, errorMessage string) error {
-	return fmt.Errorf("error reading file at %v: %v", fileName, errorMessage)
+	return
 }
 
 func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error) {
