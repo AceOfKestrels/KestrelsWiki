@@ -36,6 +36,11 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// OriginPathValidator is a validator for the "originPath" field. It is called by the builders before save.
+	OriginPathValidator func(string) error
+)
+
 // OrderOption defines the ordering options for the Mirror queries.
 type OrderOption func(*sql.Selector)
 

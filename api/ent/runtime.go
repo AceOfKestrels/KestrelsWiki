@@ -2,8 +2,26 @@
 
 package ent
 
+import (
+	"api/ent/file"
+	"api/ent/mirror"
+	"api/ent/schema"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	fileFields := schema.File{}.Fields()
+	_ = fileFields
+	// fileDescPath is the schema descriptor for path field.
+	fileDescPath := fileFields[0].Descriptor()
+	// file.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	file.PathValidator = fileDescPath.Validators[0].(func(string) error)
+	mirrorFields := schema.Mirror{}.Fields()
+	_ = mirrorFields
+	// mirrorDescOriginPath is the schema descriptor for originPath field.
+	mirrorDescOriginPath := mirrorFields[0].Descriptor()
+	// mirror.OriginPathValidator is a validator for the "originPath" field. It is called by the builders before save.
+	mirror.OriginPathValidator = mirrorDescOriginPath.Validators[0].(func(string) error)
 }

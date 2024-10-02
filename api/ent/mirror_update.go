@@ -27,20 +27,6 @@ func (mu *MirrorUpdate) Where(ps ...predicate.Mirror) *MirrorUpdate {
 	return mu
 }
 
-// SetOriginPath sets the "originPath" field.
-func (mu *MirrorUpdate) SetOriginPath(s string) *MirrorUpdate {
-	mu.mutation.SetOriginPath(s)
-	return mu
-}
-
-// SetNillableOriginPath sets the "originPath" field if the given value is not nil.
-func (mu *MirrorUpdate) SetNillableOriginPath(s *string) *MirrorUpdate {
-	if s != nil {
-		mu.SetOriginPath(*s)
-	}
-	return mu
-}
-
 // SetTargetPath sets the "targetPath" field.
 func (mu *MirrorUpdate) SetTargetPath(s string) *MirrorUpdate {
 	mu.mutation.SetTargetPath(s)
@@ -96,9 +82,6 @@ func (mu *MirrorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.OriginPath(); ok {
-		_spec.SetField(mirror.FieldOriginPath, field.TypeString, value)
-	}
 	if value, ok := mu.mutation.TargetPath(); ok {
 		_spec.SetField(mirror.FieldTargetPath, field.TypeString, value)
 	}
@@ -120,20 +103,6 @@ type MirrorUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *MirrorMutation
-}
-
-// SetOriginPath sets the "originPath" field.
-func (muo *MirrorUpdateOne) SetOriginPath(s string) *MirrorUpdateOne {
-	muo.mutation.SetOriginPath(s)
-	return muo
-}
-
-// SetNillableOriginPath sets the "originPath" field if the given value is not nil.
-func (muo *MirrorUpdateOne) SetNillableOriginPath(s *string) *MirrorUpdateOne {
-	if s != nil {
-		muo.SetOriginPath(*s)
-	}
-	return muo
 }
 
 // SetTargetPath sets the "targetPath" field.
@@ -220,9 +189,6 @@ func (muo *MirrorUpdateOne) sqlSave(ctx context.Context) (_node *Mirror, err err
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := muo.mutation.OriginPath(); ok {
-		_spec.SetField(mirror.FieldOriginPath, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.TargetPath(); ok {
 		_spec.SetField(mirror.FieldTargetPath, field.TypeString, value)

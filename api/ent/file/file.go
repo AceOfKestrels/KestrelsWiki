@@ -48,6 +48,11 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// PathValidator is a validator for the "path" field. It is called by the builders before save.
+	PathValidator func(string) error
+)
+
 // OrderOption defines the ordering options for the File queries.
 type OrderOption func(*sql.Selector)
 

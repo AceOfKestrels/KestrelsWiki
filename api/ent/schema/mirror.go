@@ -13,7 +13,7 @@ type Mirror struct {
 // Fields of the Mirror.
 func (Mirror) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("originPath").Unique(),
+		field.String("originPath").Unique().NotEmpty().Immutable(),
 		field.String("targetPath"),
 	}
 }

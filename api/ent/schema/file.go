@@ -13,7 +13,7 @@ type File struct {
 // Fields of the File.
 func (File) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("path").Unique(),
+		field.String("path").Unique().NotEmpty().Immutable(),
 		field.String("title"),
 		field.Time("updated"),
 		field.String("author"),

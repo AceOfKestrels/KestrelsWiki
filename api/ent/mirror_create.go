@@ -68,6 +68,11 @@ func (mc *MirrorCreate) check() error {
 	if _, ok := mc.mutation.OriginPath(); !ok {
 		return &ValidationError{Name: "originPath", err: errors.New(`ent: missing required field "Mirror.originPath"`)}
 	}
+	if v, ok := mc.mutation.OriginPath(); ok {
+		if err := mirror.OriginPathValidator(v); err != nil {
+			return &ValidationError{Name: "originPath", err: fmt.Errorf(`ent: validator failed for field "Mirror.originPath": %w`, err)}
+		}
+	}
 	if _, ok := mc.mutation.TargetPath(); !ok {
 		return &ValidationError{Name: "targetPath", err: errors.New(`ent: missing required field "Mirror.targetPath"`)}
 	}

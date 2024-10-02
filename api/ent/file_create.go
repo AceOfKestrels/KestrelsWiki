@@ -93,6 +93,11 @@ func (fc *FileCreate) check() error {
 	if _, ok := fc.mutation.Path(); !ok {
 		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "File.path"`)}
 	}
+	if v, ok := fc.mutation.Path(); ok {
+		if err := file.PathValidator(v); err != nil {
+			return &ValidationError{Name: "path", err: fmt.Errorf(`ent: validator failed for field "File.path": %w`, err)}
+		}
+	}
 	if _, ok := fc.mutation.Title(); !ok {
 		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "File.title"`)}
 	}

@@ -28,20 +28,6 @@ func (fu *FileUpdate) Where(ps ...predicate.File) *FileUpdate {
 	return fu
 }
 
-// SetPath sets the "path" field.
-func (fu *FileUpdate) SetPath(s string) *FileUpdate {
-	fu.mutation.SetPath(s)
-	return fu
-}
-
-// SetNillablePath sets the "path" field if the given value is not nil.
-func (fu *FileUpdate) SetNillablePath(s *string) *FileUpdate {
-	if s != nil {
-		fu.SetPath(*s)
-	}
-	return fu
-}
-
 // SetTitle sets the "title" field.
 func (fu *FileUpdate) SetTitle(s string) *FileUpdate {
 	fu.mutation.SetTitle(s)
@@ -153,9 +139,6 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := fu.mutation.Path(); ok {
-		_spec.SetField(file.FieldPath, field.TypeString, value)
-	}
 	if value, ok := fu.mutation.Title(); ok {
 		_spec.SetField(file.FieldTitle, field.TypeString, value)
 	}
@@ -189,20 +172,6 @@ type FileUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *FileMutation
-}
-
-// SetPath sets the "path" field.
-func (fuo *FileUpdateOne) SetPath(s string) *FileUpdateOne {
-	fuo.mutation.SetPath(s)
-	return fuo
-}
-
-// SetNillablePath sets the "path" field if the given value is not nil.
-func (fuo *FileUpdateOne) SetNillablePath(s *string) *FileUpdateOne {
-	if s != nil {
-		fuo.SetPath(*s)
-	}
-	return fuo
 }
 
 // SetTitle sets the "title" field.
@@ -345,9 +314,6 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := fuo.mutation.Path(); ok {
-		_spec.SetField(file.FieldPath, field.TypeString, value)
 	}
 	if value, ok := fuo.mutation.Title(); ok {
 		_spec.SetField(file.FieldTitle, field.TypeString, value)
