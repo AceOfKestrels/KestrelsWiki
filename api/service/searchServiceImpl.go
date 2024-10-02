@@ -7,6 +7,7 @@ import (
 	"api/models"
 	"api/service/helper"
 	"context"
+	"entgo.io/ent/dialect/sql"
 	"errors"
 	"os"
 	"slices"
@@ -113,38 +114,27 @@ func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath str
 func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) (err error) {
 	origin = strings.ToLower(origin)
 
-	_, err = s.dbClient.Mirror.Update().Where(mirror.OriginPath(origin)).SetTargetPath(target).Save(ctx)
-	if !ent.IsNotFound(err) {
-		return
-	}
-
-	_, err = s.dbClient.Mirror.Create().SetOriginPath(origin).SetTargetPath(target).Save(ctx)
+	err = s.dbClient.Mirror.
+		Create().
+		SetOriginPath(origin).
+		SetTargetPath(target).
+		OnConflict(sql.ResolveWithNewValues()).
+		Exec(ctx)
 	return
 }
 
 func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) (err error) {
 	path = strings.ToLower(path)
 
-	_, err = s.dbClient.File.Update().
-		Where(file.Path(path)).
-		SetTitle(title).
-		SetContent(content).
-		SetUpdated(commitData.Date).
-		SetAuthor(commitData.Author).
-		SetCommitHash(commitData.Hash).
-		Save(ctx)
-	if !ent.IsNotFound(err) {
-		return
-	}
-
-	_, err = s.dbClient.File.Create().
+	err = s.dbClient.File.Create().
 		SetPath(path).
 		SetTitle(title).
 		SetContent(content).
 		SetUpdated(commitData.Date).
 		SetAuthor(commitData.Author).
 		SetCommitHash(commitData.Hash).
-		Save(ctx)
+		OnConflict(sql.ResolveWithNewValues()).
+		Exec(ctx)
 
 	return
 }
