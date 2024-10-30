@@ -20,23 +20,28 @@ type SearchServiceImpl struct {
 	contentPath string
 }
 
+// NewSearchService returns a new instance of SearchServiceImpl.
 func NewSearchService(dbClient *ent.Client, contentPath string) *SearchServiceImpl {
 	return &SearchServiceImpl{dbClient: dbClient, contentPath: contentPath}
 }
 
+// ContentPath returns the path to the base directory of the content repository.
 func (s *SearchServiceImpl) ContentPath() string {
 	return s.contentPath
 }
 
-func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string) (models.FileDTO, error) {
-	fileName = strings.ToLower(fileName)
+// GetFileDto queries the database for the data associated with a file located at filePath.
+//
+// filePath: the relative path from ContentPath
+func (s *SearchServiceImpl) GetFileDto(context context.Context, filePath string) (models.FileDTO, error) {
+	filePath = strings.ToLower(filePath)
 
-	mirrorData, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(fileName)).Only(context)
+	mirrorData, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(filePath)).Only(context)
 	if err == nil {
 		return models.FileDTO{MirrorOf: mirrorData.TargetPath}, nil
 	}
 
-	fileMeta, err := s.dbClient.File.Query().Where(file.Path(fileName)).Only(context)
+	fileMeta, err := s.dbClient.File.Query().Where(file.Path(filePath)).Only(context)
 	if err != nil {
 		return models.FileDTO{}, err
 	}
@@ -51,6 +56,8 @@ func (s *SearchServiceImpl) GetFileDto(context context.Context, fileName string)
 	return dto, nil
 }
 
+// UpdateIndex recursively searches all subfolders for markdown files, starting at ContentPath,
+// and adds them to the index database.
 func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 	var directories []string
 	directories = append(directories, "")
@@ -82,6 +89,9 @@ func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
 	return errs
 }
 
+// AddFileToIndex reads the file located at filePath, adding its content and metadata to the index database.
+//
+// filePath: the relative path from ContentPath
 func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath string) error {
 	content, err := helper.ReadFileContents(s.contentPath + filePath)
 	if err != nil {
@@ -112,6 +122,7 @@ func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath str
 	return s.setFile(filePath, meta.Title, commitData, article, context)
 }
 
+// setMirror adds a mirror path to the database.
 func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) (err error) {
 	origin = strings.ToLower(origin)
 
@@ -124,6 +135,7 @@ func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.
 	return
 }
 
+// setFile adds file content and metadata for a file located at path to the database.
 func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) (err error) {
 	path = strings.ToLower(path)
 
@@ -140,6 +152,7 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 	return
 }
 
+// SearchFiles searches the indexed files and returns all the match search.
 func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error) {
 	found, result, err := s.searchFiles(ctx, map[string]bool{},
 		file.And(
@@ -168,6 +181,7 @@ func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.Searc
 	return result, nil
 }
 
+// searchFiles queries the database using predicate and returns all results that are not in alreadyFound
 func (s *SearchServiceImpl) searchFiles(ctx context.Context, alreadyFound map[string]bool, predicate predicate.File) (pathsFound map[string]bool, dtos []models.FileDTO, err error) {
 	found, err := s.dbClient.File.Query().Where(predicate).All(ctx)
 	if err != nil {
