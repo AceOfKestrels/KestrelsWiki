@@ -93,11 +93,8 @@ func GetArticleTitle(content string) (string, error) {
 // use git log to retrieve information about the last commit the file was edited in.
 // If any errors occur, a zero commit data and the error are returned.
 func GetCommitData(filePath string, repositoryPath string) (commitData models.CommitData, err error) {
-	cmd := exec.Command("git", "log", "-1",
+	output, err := ExecuteCommand(repositoryPath, "git", "log", "-1",
 		`--pretty=format:{"hash": "%H", "date": "%ad", "author": "%an"}`, "--date=iso-strict", filePath)
-	cmd.Dir = repositoryPath
-
-	output, err := cmd.Output()
 	if err != nil {
 		return
 	}
@@ -111,4 +108,11 @@ func GetCommitData(filePath string, repositoryPath string) (commitData models.Co
 // "error reading file at fileName: errorMessage"
 func GetFileReadingError(fileName string, errorMessage string) error {
 	return fmt.Errorf("error reading file at %v: %v", fileName, errorMessage)
+}
+
+func ExecuteCommand(directory string, command string, args ...string) (output []byte, err error) {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = directory
+	output, err = cmd.Output()
+	return
 }

@@ -10,10 +10,14 @@ import (
 	"context"
 	"entgo.io/ent/dialect/sql"
 	"errors"
+	"fmt"
 	"os"
 	"slices"
 	"strings"
+	"time"
 )
+
+const AlreadyUpToDate = "Already up to date."
 
 type SearchServiceImpl struct {
 	dbClient    *ent.Client
@@ -56,9 +60,32 @@ func (s *SearchServiceImpl) GetFileDto(context context.Context, filePath string)
 	return dto, nil
 }
 
+func (s *SearchServiceImpl) UpdateIndex() error {
+	err := s.gitPull()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = s.updateIndex(ctx)
+
+	return err
+}
+
+func (s *SearchServiceImpl) gitPull() (err error) {
+	output, err := helper.ExecuteCommand(s.contentPath, "git", "pull")
+	if strings.Contains(string(output), AlreadyUpToDate) {
+		err = fmt.Errorf("no changes available in remote repository")
+	}
+
+	return
+}
+
 // UpdateIndex recursively searches all subfolders for markdown files, starting at ContentPath,
 // and adds them to the index database.
-func (s *SearchServiceImpl) UpdateIndex(context context.Context) error {
+func (s *SearchServiceImpl) updateIndex(context context.Context) error {
 	var directories []string
 	directories = append(directories, "")
 

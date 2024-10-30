@@ -3,6 +3,7 @@ package main
 import (
 	"api/controller/fileController"
 	"api/controller/searchController"
+	"api/controller/webhookController"
 	"api/db/ent"
 	"api/logger"
 	"api/service"
@@ -10,10 +11,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
-	"time"
-
 	_ "github.com/xiaoqidun/entps"
+	"log"
 )
 
 func main() {
@@ -47,11 +46,8 @@ func main() {
 
 	searchService := service.NewSearchService(dbClient, "../testFiles/")
 
-	background := context.Background()
-	ctx, cancel := context.WithTimeout(background, 5*time.Second)
-	defer cancel()
 	logger.Println(logger.INIT, "updating file index")
-	err = searchService.UpdateIndex(ctx)
+	err = searchService.UpdateIndex()
 	if err != nil {
 		logger.Println(logger.INIT, err.Error())
 	}
@@ -64,9 +60,11 @@ func main() {
 
 	fileCtrl := fileController.NewFileController(searchService, "/api/file")
 	searchCtrl := searchController.NewSearchController(searchService, "/api/search")
+	webhookCtrl := webhookController.NewWebhookController(searchService, "/api/webhook")
 
 	engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
+	engine.POST(webhookCtrl.WebhookEndpoint, webhookCtrl.PostWebhook)
 
 	logger.Println(logger.API, "starting web server on port %v", *apiPort)
 	err = engine.Run(fmt.Sprintf("localhost:%v", *apiPort))
