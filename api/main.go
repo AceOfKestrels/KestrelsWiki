@@ -15,20 +15,28 @@ import (
 	"log"
 )
 
+var DbPath string
+var ApiPort int
+var Debug bool
+
 func main() {
 	dbPath := flag.String("dbPath", "./data.db", "path to the database file")
 	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
 	debug := flag.Bool("debug", false, "debug mode")
 	flag.Parse()
 
+	DbPath = *dbPath
+	ApiPort = *apiPort
+	Debug = *debug
+
 	logger.Init()
 
-	logger.Println(logger.DB, "attempting to open database at %v", dbPath)
-	dbClient, err := ent.Open("sqlite3", "file:"+*dbPath)
+	logger.Println(logger.DB, "attempting to open database at %v", DbPath)
+	dbClient, err := ent.Open("sqlite3", "file:"+DbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *debug {
+	if Debug {
 		dbClient = dbClient.Debug()
 	}
 	defer func(dbClient *ent.Client) {
@@ -46,11 +54,7 @@ func main() {
 
 	searchService := service.NewSearchService(dbClient, "../testFiles/")
 
-	logger.Println(logger.INIT, "updating file index")
-	err = searchService.UpdateIndex()
-	if err != nil {
-		logger.Println(logger.INIT, err.Error())
-	}
+	err = searchService.RebuildIndex()
 
 	logger.Println(logger.API, "initializing gin engine")
 	if !*debug {
@@ -66,8 +70,8 @@ func main() {
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
 	engine.POST(webhookCtrl.WebhookEndpoint, webhookCtrl.PostWebhook)
 
-	logger.Println(logger.API, "starting web server on port %v", *apiPort)
-	err = engine.Run(fmt.Sprintf("localhost:%v", *apiPort))
+	logger.Println(logger.API, "starting web server on port %v", ApiPort)
+	err = engine.Run(fmt.Sprintf("localhost:%v", ApiPort))
 	if err != nil {
 		log.Fatal(err)
 	}

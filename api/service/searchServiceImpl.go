@@ -5,6 +5,7 @@ import (
 	"api/db/ent/file"
 	"api/db/ent/mirror"
 	"api/db/ent/predicate"
+	"api/logger"
 	"api/models"
 	"api/service/helper"
 	"context"
@@ -18,6 +19,9 @@ import (
 )
 
 const AlreadyUpToDate = "Already up to date."
+
+var countFiles int
+var countMirrors int
 
 type SearchServiceImpl struct {
 	dbClient    *ent.Client
@@ -60,17 +64,25 @@ func (s *SearchServiceImpl) GetFileDto(context context.Context, filePath string)
 	return dto, nil
 }
 
-func (s *SearchServiceImpl) UpdateIndex() error {
+func (s *SearchServiceImpl) RebuildIndex() error {
+	logger.Println(logger.INIT, "pulling changes from github")
 	err := s.gitPull()
 	if err != nil {
+		logger.Println(logger.INIT, "error pulling changes: "+err.Error())
 		return err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	logger.Println(logger.INIT, "rebuilding file index")
 	err = s.updateIndex(ctx)
 
+	if err != nil {
+		logger.Println(logger.INIT, "error saving file index: "+err.Error())
+	} else {
+		logger.Println(logger.INIT, "finished building file index: %v files, %v mirrors", countFiles, countMirrors)
+	}
 	return err
 }
 
@@ -88,6 +100,9 @@ func (s *SearchServiceImpl) gitPull() (err error) {
 func (s *SearchServiceImpl) updateIndex(context context.Context) error {
 	var directories []string
 	directories = append(directories, "")
+
+	countFiles = 0
+	countMirrors = 0
 
 	var errs error
 
@@ -159,6 +174,11 @@ func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.
 		SetTargetPath(target).
 		OnConflict(sql.ResolveWithNewValues()).
 		Exec(ctx)
+
+	if err == nil {
+		countMirrors++
+	}
+
 	return
 }
 
@@ -175,6 +195,10 @@ func (s *SearchServiceImpl) setFile(path string, title string, commitData models
 		SetCommitHash(commitData.Hash).
 		OnConflict(sql.ResolveWithNewValues()).
 		Exec(ctx)
+
+	if err == nil {
+		countFiles++
+	}
 
 	return
 }

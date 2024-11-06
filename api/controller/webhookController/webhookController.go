@@ -1,12 +1,11 @@
 package webhookController
 
 import (
-	"api/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type SearchService interface {
-	UpdateIndex() error
+	RebuildIndex() error
 }
 
 type WebhookController struct {
@@ -20,9 +19,6 @@ func NewWebhookController(searchService SearchService, webhookEndpoint string) *
 
 func (w *WebhookController) PostWebhook(_ *gin.Context) {
 	go func() {
-		err := w.searchService.UpdateIndex()
-		if err != nil {
-			logger.Println(logger.API, err.Error())
-		}
+		_ = w.searchService.RebuildIndex()
 	}()
 }
