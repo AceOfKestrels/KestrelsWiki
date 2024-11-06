@@ -3,15 +3,13 @@ package searchController
 import (
 	"api/logger"
 	"api/models"
-	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 )
 
 type SearchService interface {
 	ContentPath() string
-	SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error)
+	SearchFiles(search models.SearchContext) []models.FileDTO
 }
 
 type SearchController struct {
@@ -32,14 +30,6 @@ func (s *SearchController) PostSearch(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
-	results, err := s.searchService.SearchFiles(ctx, search)
-	if err != nil {
-		c.Status(http.StatusNotFound)
-		logger.Println(logger.API, "error: %v", err.Error())
-		return
-	}
-
+	results := s.searchService.SearchFiles(search)
 	c.JSON(http.StatusOK, results)
 }

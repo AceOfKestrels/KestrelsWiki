@@ -3,16 +3,14 @@ package fileController
 import (
 	"api/logger"
 	"api/models"
-	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type SearchService interface {
 	ContentPath() string
-	GetFileDto(ctx context.Context, fileContent string) (models.FileDTO, error)
+	GetFileDto(fileContent string) (models.FileDTO, error)
 }
 
 type FileController struct {
@@ -38,9 +36,7 @@ func (f *FileController) GetFile(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
-	dto, err := f.searchService.GetFileDto(ctx, filePath[1:]+".md")
+	dto, err := f.searchService.GetFileDto(filePath[1:] + ".md")
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		logger.Println(logger.API, "error finding file: %v", err)

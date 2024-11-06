@@ -1,21 +1,14 @@
 package service
 
 import (
-	"api/db/ent"
-	"api/db/ent/file"
-	"api/db/ent/mirror"
-	"api/db/ent/predicate"
 	"api/logger"
 	"api/models"
 	"api/service/helper"
-	"context"
-	"entgo.io/ent/dialect/sql"
 	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
-	"time"
 )
 
 const AlreadyUpToDate = "Already up to date."
@@ -23,14 +16,16 @@ const AlreadyUpToDate = "Already up to date."
 var countFiles int
 var countMirrors int
 
+var mirrors map[string]string
+var files map[string]models.FileDTO
+
 type SearchServiceImpl struct {
-	dbClient    *ent.Client
 	contentPath string
 }
 
 // NewSearchService returns a new instance of SearchServiceImpl.
-func NewSearchService(dbClient *ent.Client, contentPath string) *SearchServiceImpl {
-	return &SearchServiceImpl{dbClient: dbClient, contentPath: contentPath}
+func NewSearchService(contentPath string) *SearchServiceImpl {
+	return &SearchServiceImpl{contentPath: contentPath}
 }
 
 // ContentPath returns the path to the base directory of the content repository.
@@ -38,45 +33,35 @@ func (s *SearchServiceImpl) ContentPath() string {
 	return s.contentPath
 }
 
-// GetFileDto queries the database for the data associated with a file located at filePath.
+// GetFileDto searches the index for the data associated with a file located at filePath.
 //
 // filePath: the relative path from ContentPath
-func (s *SearchServiceImpl) GetFileDto(context context.Context, filePath string) (models.FileDTO, error) {
+func (s *SearchServiceImpl) GetFileDto(filePath string) (models.FileDTO, error) {
 	filePath = strings.ToLower(filePath)
 
-	mirrorData, err := s.dbClient.Mirror.Query().Where(mirror.OriginPath(filePath)).Only(context)
-	if err == nil {
-		return models.FileDTO{MirrorOf: mirrorData.TargetPath}, nil
+	mirrorData, ok := mirrors[filePath]
+	if ok {
+		return models.FileDTO{MirrorOf: mirrorData}, nil
 	}
 
-	fileMeta, err := s.dbClient.File.Query().Where(file.Path(filePath)).Only(context)
-	if err != nil {
-		return models.FileDTO{}, err
+	fileDto, ok := files[filePath]
+	if !ok {
+		return models.FileDTO{}, errors.New("file not found")
 	}
 
-	dto := models.FileDTO{
-		Path:    strings.ToLower(fileMeta.Path),
-		Title:   fileMeta.Title,
-		Updated: fileMeta.Updated,
-		Content: fileMeta.Content,
-	}
-
-	return dto, nil
+	return fileDto, nil
 }
 
-func (s *SearchServiceImpl) RebuildIndex() error {
+func (s *SearchServiceImpl) RebuildIndex(firstBuild bool) error {
 	logger.Println(logger.INIT, "pulling changes from github")
 	err := s.gitPull()
-	if err != nil {
+	if err != nil && !firstBuild {
 		logger.Println(logger.INIT, "error pulling changes: "+err.Error())
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	logger.Println(logger.INIT, "rebuilding file index")
-	err = s.updateIndex(ctx)
+	err = s.updateIndex()
 
 	if err != nil {
 		logger.Println(logger.INIT, "error saving file index: "+err.Error())
@@ -96,13 +81,15 @@ func (s *SearchServiceImpl) gitPull() (err error) {
 }
 
 // UpdateIndex recursively searches all subfolders for markdown files, starting at ContentPath,
-// and adds them to the index database.
-func (s *SearchServiceImpl) updateIndex(context context.Context) error {
+// and adds them to the index.
+func (s *SearchServiceImpl) updateIndex() error {
 	var directories []string
 	directories = append(directories, "")
 
 	countFiles = 0
 	countMirrors = 0
+	mirrors = make(map[string]string)
+	files = make(map[string]models.FileDTO)
 
 	var errs error
 
@@ -124,17 +111,17 @@ func (s *SearchServiceImpl) updateIndex(context context.Context) error {
 		}
 
 		for _, f := range files {
-			errors.Join(errs, s.AddFileToIndex(context, f))
+			errors.Join(errs, s.AddFileToIndex(f))
 		}
 	}
 
 	return errs
 }
 
-// AddFileToIndex reads the file located at filePath, adding its content and metadata to the index database.
+// AddFileToIndex reads the file located at filePath, adding its content and metadata to the index.
 //
 // filePath: the relative path from ContentPath
-func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath string) error {
+func (s *SearchServiceImpl) AddFileToIndex(filePath string) error {
 	content, err := helper.ReadFileContents(s.contentPath + filePath)
 	if err != nil {
 		return helper.GetFileReadingError(filePath, err.Error())
@@ -146,7 +133,8 @@ func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath str
 	article, meta := helper.GetArticle(content)
 
 	if meta.MirrorOf != "" {
-		return s.setMirror(filePath, meta.MirrorOf, context)
+		s.setMirror(filePath, meta.MirrorOf)
+		return nil
 	}
 
 	if meta.Title == "" {
@@ -161,93 +149,67 @@ func (s *SearchServiceImpl) AddFileToIndex(context context.Context, filePath str
 		return helper.GetFileReadingError(filePath, err.Error())
 	}
 
-	return s.setFile(filePath, meta.Title, commitData, article, context)
+	s.setFile(filePath, meta.Title, commitData, article)
+	return nil
 }
 
-// setMirror adds a mirror path to the database.
-func (s *SearchServiceImpl) setMirror(origin string, target string, ctx context.Context) (err error) {
+// setMirror adds a mirror path to the mirrors map.
+func (s *SearchServiceImpl) setMirror(origin string, target string) {
 	origin = strings.ToLower(origin)
-
-	err = s.dbClient.Mirror.
-		Create().
-		SetOriginPath(origin).
-		SetTargetPath(target).
-		OnConflict(sql.ResolveWithNewValues()).
-		Exec(ctx)
-
-	if err == nil {
-		countMirrors++
-	}
-
-	return
+	mirrors[origin] = target
+	countMirrors++
 }
 
-// setFile adds file content and metadata for a file located at path to the database.
-func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, ctx context.Context) (err error) {
+// setFile adds file content and metadata for a file located at path to the files map.
+func (s *SearchServiceImpl) setFile(path string, title string, commitData models.CommitData, content string) {
 	path = strings.ToLower(path)
 
-	err = s.dbClient.File.Create().
-		SetPath(path).
-		SetTitle(title).
-		SetContent(content).
-		SetUpdated(commitData.Date).
-		SetAuthor(commitData.Author).
-		SetCommitHash(commitData.Hash).
-		OnConflict(sql.ResolveWithNewValues()).
-		Exec(ctx)
-
-	if err == nil {
-		countFiles++
+	files[path] = models.FileDTO{
+		Path:       path,
+		Title:      title,
+		Content:    content,
+		Updated:    commitData.Date,
+		Author:     commitData.Author,
+		LastCommit: commitData.Hash,
 	}
 
-	return
+	countFiles++
 }
 
 // SearchFiles searches the indexed files and returns all the match search.
-func (s *SearchServiceImpl) SearchFiles(ctx context.Context, search models.SearchContext) ([]models.FileDTO, error) {
-	found, result, err := s.searchFiles(ctx, map[string]bool{},
-		file.And(
-			file.Not(
-				file.Path(search.CurrentPage)),
-			file.TitleContainsFold(search.SearchString)))
-	if err != nil {
-		return nil, err
-	}
+func (s *SearchServiceImpl) SearchFiles(search models.SearchContext) []models.FileDTO {
+	search.SearchString = strings.ToLower(search.SearchString)
+	search.CurrentPage = strings.ToLower(search.CurrentPage)
+
+	found, result := s.searchFiles(map[string]bool{}, func(dto models.FileDTO) bool {
+		return dto.Path != search.CurrentPage && strings.Contains(strings.ToLower(dto.Title), search.SearchString)
+	})
 
 	if !search.SearchInContent {
-		return result, nil
+		return result
 	}
 
-	paths, files, err := s.searchFiles(ctx, found,
-		file.And(
-			file.Not(
-				file.Path(search.CurrentPage)),
-			file.ContentContainsFold(search.SearchString)))
-	if err != nil {
-		return nil, err
-	}
+	paths, files := s.searchFiles(map[string]bool{}, func(dto models.FileDTO) bool {
+		return dto.Path != search.CurrentPage && strings.Contains(strings.ToLower(dto.Content), search.SearchString)
+	})
 	result = append(result, files...)
 	found = s.addAllToMap(found, paths)
 
-	return result, nil
+	return result
 }
 
-// searchFiles queries the database using predicate and returns all results that are not in alreadyFound
-func (s *SearchServiceImpl) searchFiles(ctx context.Context, alreadyFound map[string]bool, predicate predicate.File) (pathsFound map[string]bool, dtos []models.FileDTO, err error) {
-	found, err := s.dbClient.File.Query().Where(predicate).All(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	for _, f := range found {
-		if _, exists := alreadyFound[f.Path]; !exists {
-			alreadyFound[f.Path] = true
-			dtos = append(dtos, models.FileDTO{Path: f.Path, Title: f.Title, Updated: f.Updated})
+// searchFiles searches the files map using predicate and returns all results that are not in alreadyFound
+func (s *SearchServiceImpl) searchFiles(alreadyFound map[string]bool, predicate func(dto models.FileDTO) bool) (pathsFound map[string]bool, dtos []models.FileDTO) {
+	for _, dto := range files {
+		if _, ok := alreadyFound[dto.Path]; predicate(dto) && !ok {
+			dtos = append(dtos, dto)
+			alreadyFound[dto.Path] = true
 		}
 	}
 
 	slices.SortStableFunc(dtos, func(a, b models.FileDTO) int { return len(a.Title) - len(b.Title) })
 
-	return pathsFound, dtos, nil
+	return pathsFound, dtos
 }
 
 func (s *SearchServiceImpl) addAllToMap(old map[string]bool, add map[string]bool) (result map[string]bool) {

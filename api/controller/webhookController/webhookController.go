@@ -5,7 +5,7 @@ import (
 )
 
 type SearchService interface {
-	RebuildIndex() error
+	RebuildIndex(firstBuild bool) error
 }
 
 type WebhookController struct {
@@ -19,6 +19,6 @@ func NewWebhookController(searchService SearchService, webhookEndpoint string) *
 
 func (w *WebhookController) PostWebhook(_ *gin.Context) {
 	go func() {
-		_ = w.searchService.RebuildIndex()
+		_ = w.searchService.RebuildIndex(false)
 	}()
 }

@@ -4,10 +4,8 @@ import (
 	"api/controller/fileController"
 	"api/controller/searchController"
 	"api/controller/webhookController"
-	"api/db/ent"
 	"api/logger"
 	"api/service"
-	"context"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -15,46 +13,22 @@ import (
 	"log"
 )
 
-var DbPath string
 var ApiPort int
 var Debug bool
 
 func main() {
-	dbPath := flag.String("dbPath", "./data.db", "path to the database file")
 	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
 	debug := flag.Bool("debug", false, "debug mode")
 	flag.Parse()
 
-	DbPath = *dbPath
 	ApiPort = *apiPort
 	Debug = *debug
 
 	logger.Init()
 
-	logger.Println(logger.DB, "attempting to open database at %v", DbPath)
-	dbClient, err := ent.Open("sqlite3", "file:"+DbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if Debug {
-		dbClient = dbClient.Debug()
-	}
-	defer func(dbClient *ent.Client) {
-		logger.Println(logger.DB, "closing database")
-		err := dbClient.Close()
-		if err != nil {
+	searchService := service.NewSearchService("../testFiles/")
 
-		}
-	}(dbClient)
-
-	logger.Println(logger.DB, "updating database schema")
-	if err := dbClient.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("failed creating schema resources: %v", err)
-	}
-
-	searchService := service.NewSearchService(dbClient, "../testFiles/")
-
-	err = searchService.RebuildIndex()
+	err := searchService.RebuildIndex(true)
 
 	logger.Println(logger.API, "initializing gin engine")
 	if !*debug {
