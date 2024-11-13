@@ -1,0 +1,21 @@
+@import "content.css";
+
+* {
+    margin: 0;
+    box-sizing: border-box;
+    color: var(--color-font);
+    font-family: Quicksand, sans-serif;
+}
+
+body {
+    background-color: var(--color-background);
+}
+
+.topbar {
+    position: fixed;
+    width: 100%;
+    height: var(--topbar-height);
+    background-color: var(--color-accent-hover);
+    top: 0;
+    left: 0;
+}

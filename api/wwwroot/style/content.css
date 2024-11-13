@@ -1,0 +1,20 @@
+#content-container {
+    margin-top: var(--topbar-height);
+}
+
+#content-container code, #content-container code * {
+    font-family: monospace;
+}
+
+#content-container h1 {
+    font-size: 2em;
+    margin-bottom: 0.75em;
+}
+
+#content-container h2, #content-container h3 {
+    margin-top: 1em;
+}
+
+#content-container p {
+    margin-top: 0.5em;
+}

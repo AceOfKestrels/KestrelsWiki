@@ -1,0 +1,20 @@
+* {
+    --color-base: hsl(320, 55%, 60%);
+
+    --color-background: hsl(290, 20%, 8%);
+
+    --color-font: hsl(320, 20%, 90%);
+    --color-font-hover: hsl(320, 20%, 8%);
+    --color-font-dark: hsl(320, 10%, 35%);
+
+    --color-primary: hsl(290, 25%, 15%);
+    --color-primary-hover: hsl(320, 55%, 60%);
+
+    --color-accent: hsl(290, 20%, 10%);
+    --color-accent-hover: hsl(290, 20%, 12%);
+
+    --color-scrollbar-track: transparent;
+    --color-scrollbar-thumb: var(--color-primary);
+
+    --topbar-height: 60px;
+}
