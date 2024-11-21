@@ -11,16 +11,17 @@
     --color-primary: hsl(290, 25%, 15%);
     --color-primary-hover: hsl(320, 55%, 60%);
 
-    --color-accent: hsl(290, 20%, 10%);
-    --color-accent-hover: hsl(290, 20%, 12%);
+    --color-accent: hsl(290, 20%, 15%);
+    --color-accent-hover: hsl(290, 20%, 17%);
 
     --color-scrollbar-track: transparent;
     --color-scrollbar-thumb: var(--color-primary);
 
-    --topbar-height: 60px;
+    --header-height: 60px;
     --sidebar-left: 200px;
     --sidebar-right: 200px;
     --sidebar-min: 60px;
     --footer-height: 100px;
     --border-radius: 10px;
+    --border-radius-small: 5px;
 }

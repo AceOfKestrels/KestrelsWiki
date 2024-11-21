@@ -18,13 +18,14 @@ body {
 
 .layout {
     display: grid;
-    grid-template-rows: var(--topbar-height) 1fr var(--footer-height);
+    grid-template-rows: var(--header-height) 1fr var(--footer-height);
     grid-template-columns: var(--sidebar-left) 1fr var(--sidebar-right);
     grid-template-areas:
     "header header header"
     "left content right"
     "footer footer footer";
     min-height: 100vh;
+    transition: grid-template-columns 0.3s ease;
 }
 
 .footer {

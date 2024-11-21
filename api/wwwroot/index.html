@@ -11,6 +11,7 @@
 
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
     <script src="js/script.js"></script>
+    <script src="https://kit.fontawesome.com/d9094755fb.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div id="layout" class="layout">
@@ -18,7 +19,9 @@
             <h1>Kestrel's Wiki</h1>
         </header>
         <aside class="sidebar left-sidebar">
-            <button onclick="toggleSidebarLeft()">toggle</button>
+            <button class="sidebar-toggle" id="toggle-left-button" onclick="toggleSidebarLeft()">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
         </aside>
         <main class="content">
             <div id="content-container">
@@ -68,7 +71,9 @@
             </div>
         </main>
         <aside class="sidebar right-sidebar">
-            <button onclick="toggleSidebarRight()">toggle</button>
+            <button class="sidebar-toggle" id="toggle-right-button" onclick="toggleSidebarRight()">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
         </aside>
         <footer class="footer"></footer>
     </div>

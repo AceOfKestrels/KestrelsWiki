@@ -18,3 +18,20 @@
 .right-collapsed {
     --sidebar-right: var(--sidebar-min);
 }
+
+.sidebar-toggle {
+    background-color: transparent;
+    border: none;
+    border-radius: var(--border-radius-small);
+    margin: 10px;
+    font-size: 1.5em;
+    transition: transform 0.3s;
+}
+
+.sidebar-toggle:hover {
+    background-color: var(--color-accent);
+}
+
+.sidebar-toggle.turned {
+    transform: rotate(90deg);
+}
