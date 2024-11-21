@@ -1,7 +1,3 @@
-#content-container {
-    margin-top: var(--topbar-height);
-}
-
 #content-container code, #content-container code * {
     font-family: monospace;
 }
