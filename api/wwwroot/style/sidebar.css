@@ -1,0 +1,20 @@
+.sidebar {
+    background-color: var(--color-background);
+    overflow: hidden;
+}
+
+.left-sidebar {
+    grid-area: left;
+}
+
+.right-sidebar {
+    grid-area: right;
+}
+
+.left-collapsed {
+    --sidebar-left: var(--sidebar-min);
+}
+
+.right-collapsed {
+    --sidebar-right: var(--sidebar-min);
+}

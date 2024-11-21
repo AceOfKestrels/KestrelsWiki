@@ -10,13 +10,16 @@
     <link rel="stylesheet" href="style/font.css">
 
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <script src="js/script.js"></script>
 </head>
 <body>
     <div id="layout" class="layout">
-        <header class="topbar">
+        <header class="header">
             <h1>Kestrel's Wiki</h1>
         </header>
-        <aside class="sidebar left-sidebar"></aside>
+        <aside class="sidebar left-sidebar">
+            <button onclick="toggleSidebarLeft()">toggle</button>
+        </aside>
         <main class="content">
             <div id="content-container">
                 <h1 id="golang-go-">Golang (Go)</h1>
@@ -64,7 +67,9 @@
                 </ul>
             </div>
         </main>
-        <aside class="sidebar right-sidebar"></aside>
+        <aside class="sidebar right-sidebar">
+            <button onclick="toggleSidebarRight()">toggle</button>
+        </aside>
         <footer class="footer"></footer>
     </div>
 </body>

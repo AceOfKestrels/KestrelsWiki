@@ -1,3 +1,11 @@
+.content {
+    grid-area: content;
+    padding: 25px;
+    background-color: var(--color-content-background);
+    border-radius: var(--border-radius);
+    transition: width 0.3s;
+}
+
 #content-container code, #content-container code * {
     font-family: monospace;
 }

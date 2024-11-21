@@ -1,4 +1,6 @@
 @import "content.css";
+@import "header.css";
+@import "sidebar.css";
 
 * {
     margin: 0;
@@ -19,39 +21,10 @@ body {
     grid-template-rows: var(--topbar-height) 1fr var(--footer-height);
     grid-template-columns: var(--sidebar-left) 1fr var(--sidebar-right);
     grid-template-areas:
-    "topbar topbar topbar"
+    "header header header"
     "left content right"
     "footer footer footer";
     min-height: 100vh;
-}
-
-.topbar {
-    background-color: var(--color-background);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    grid-area: topbar;
-}
-
-.sidebar {
-    background-color: var(--color-background);
-    overflow: hidden;
-}
-
-.left-sidebar {
-    grid-area: left;
-}
-
-.right-sidebar {
-    grid-area: right;
-}
-
-.content {
-    grid-area: content;
-    padding: 25px;
-    background-color: var(--color-content-background);
-    border-radius: var(--border-radius);
-    transition: width 0.3s;
 }
 
 .footer {
