@@ -158,7 +158,9 @@ func (s *ServiceImpl) AddFileToIndex(filePath string) error {
 		return helper.GetFileReadingError(filePath, err.Error())
 	}
 
-	s.setFile(filePath, meta.Title, commitData, article)
+	renderedArticle := helper.RenderMarkdown(article)
+
+	s.setFile(filePath, meta.Title, commitData, renderedArticle)
 	return nil
 }
 
