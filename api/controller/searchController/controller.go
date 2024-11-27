@@ -7,21 +7,21 @@ import (
 	"net/http"
 )
 
-type SearchService interface {
+type FileService interface {
 	ContentPath() string
 	SearchFiles(search models.SearchContext) []models.FileDTO
 }
 
-type SearchController struct {
-	searchService SearchService
-	Path          string
+type Controller struct {
+	fileService FileService
+	Path        string
 }
 
-func NewSearchController(searchService SearchService, path string) *SearchController {
-	return &SearchController{searchService: searchService, Path: path}
+func New(fileService FileService, path string) *Controller {
+	return &Controller{fileService: fileService, Path: path}
 }
 
-func (s *SearchController) PostSearch(c *gin.Context) {
+func (s *Controller) PostSearch(c *gin.Context) {
 	var search models.SearchContext
 	err := c.BindJSON(&search)
 	if err != nil {
@@ -30,6 +30,6 @@ func (s *SearchController) PostSearch(c *gin.Context) {
 		return
 	}
 
-	results := s.searchService.SearchFiles(search)
+	results := s.fileService.SearchFiles(search)
 	c.JSON(http.StatusOK, results)
 }

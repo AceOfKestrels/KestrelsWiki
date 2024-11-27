@@ -6,7 +6,7 @@ import (
 	"api/controller/webhookController"
 	"api/logger"
 	params "api/parameters"
-	"api/service"
+	"api/service/fileService"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -28,9 +28,9 @@ func main() {
 
 	logger.Init()
 
-	searchService := service.NewSearchService(params.ContentPath)
+	fileServ := fileService.New(params.ContentPath)
 
-	err := searchService.RebuildIndex(true)
+	err := fileServ.RebuildIndex(true)
 
 	logger.Println(logger.API, "initializing gin engine")
 	if !*debug {
@@ -38,9 +38,9 @@ func main() {
 	}
 	engine := gin.Default()
 
-	fileCtrl := fileController.NewFileController(searchService, "/api/file")
-	searchCtrl := searchController.NewSearchController(searchService, "/api/search")
-	webhookCtrl := webhookController.NewWebhookController(searchService, "/api/webhook")
+	fileCtrl := fileController.New(fileServ, "/api/file")
+	searchCtrl := searchController.New(fileServ, "/api/search")
+	webhookCtrl := webhookController.New(fileServ, "/api/webhook")
 
 	engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)

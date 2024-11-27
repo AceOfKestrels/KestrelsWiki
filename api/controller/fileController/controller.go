@@ -8,21 +8,21 @@ import (
 	"strings"
 )
 
-type SearchService interface {
+type FileService interface {
 	ContentPath() string
 	GetFileDto(fileContent string) (models.FileDTO, error)
 }
 
-type FileController struct {
-	searchService SearchService
-	Path          string
+type Controller struct {
+	fileService FileService
+	Path        string
 }
 
-func NewFileController(searchService SearchService, path string) *FileController {
-	return &FileController{searchService: searchService, Path: path}
+func New(fileService FileService, path string) *Controller {
+	return &Controller{fileService: fileService, Path: path}
 }
 
-func (f *FileController) GetFile(c *gin.Context) {
+func (f *Controller) GetFile(c *gin.Context) {
 	filePath := c.Param("filepath")
 	if filePath == "" {
 		c.Status(http.StatusBadRequest)
@@ -31,12 +31,12 @@ func (f *FileController) GetFile(c *gin.Context) {
 	}
 
 	if strings.Contains(filePath, ".") {
-		c.File(f.searchService.ContentPath() + filePath)
+		c.File(f.fileService.ContentPath() + filePath)
 		c.Status(http.StatusOK)
 		return
 	}
 
-	dto, err := f.searchService.GetFileDto(filePath[1:] + ".md")
+	dto, err := f.fileService.GetFileDto(filePath[1:] + ".md")
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		logger.Println(logger.API, "error finding file: %v", err)
