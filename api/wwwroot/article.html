@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kestrel's Wiki</title>
+
+    <link rel="stylesheet" href="style/main.css">
+    <link rel="stylesheet" href="style/variables.css">
+    <link rel="stylesheet" href="style/font.css">
+
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <script src="js/script.js"></script>
+    <script src="https://kit.fontawesome.com/d9094755fb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="layout" class="layout">
+    <header class="header">
+        <h1>Kestrel's Wiki</h1>
+    </header>
+    <aside class="sidebar left-sidebar">
+        <button class="sidebar-toggle" id="toggle-left-button" onclick="toggleSidebarLeft()">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </aside>
+    <main class="content">
+        <div id="content-container">
+            <h1 id="golang-go-">Golang (Go)</h1>
+            <p>Go is an open-source programming language supported by Google, built for concurrency and lightweight cloud and network applications.</p>
+            <h2 id="getting-started">Getting Started</h2>
+            <p>Go can be downloaded from its <a href="https://go.dev">website</a>, which also offers tutorials for beginners to learn the language.</p>
+            <h3 id="creating-a-module">Creating a Module</h3>
+            <p>The <code>go mod init</code> command can be used to create a new module (project):</p>
+            <pre><code>$ <span class="hljs-built_in">go</span> <span class="hljs-built_in">mod</span> init <span class="hljs-built_in">example</span>/helloWorld
+        <span class="hljs-built_in">go</span>: creating <span class="hljs-built_in">new</span> <span class="hljs-built_in">go</span>.<span class="hljs-built_in">mod</span>: module <span class="hljs-built_in">example</span>/helloWorld
+        </code></pre><h3 id="main-function">Main Function</h3>
+            <p>Go source files use the <code>.go</code> file extension. Functions are declared in packages. Like in other programming languages, the <code>main function</code> serves as the entry point of a Go program:</p>
+            <pre><code class="lang-go"><span class="hljs-keyword">package</span> main
+
+        <span class="hljs-keyword">import</span> <span class="hljs-string">"fmt"</span>
+
+        <span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+            fmt.Println(<span class="hljs-string">"Hello, World!"</span>)
+        }
+        </code></pre>
+            <p><code>fmt</code> is a standard package that contains functions for formatting text, including printing text to the console. </p>
+            <h3 id="external-packages">External Packages</h3>
+            <p>Packages that aren&#39;t included in the standard library must be added to the project dependencies. Packages can be found on <a href="https://pkg.go.dev/">pkg.go.dev</a>. The <code>index</code> section of a package&#39;s overview contains a list off all the functions and interfaecs it declares.</p>
+            <p>After importing a new package, use the <code>gp mod tidy</code> command to update dependencies:</p>
+            <pre><code class="lang-go"><span class="hljs-keyword">import</span> <span class="hljs-string">"rsc.io/quote"</span> <span class="hljs-comment">// external package</span>
+        </code></pre>
+            <pre><code>$ go mod tidy
+        go: finding module <span class="hljs-keyword">for</span> package rsc.io/<span class="hljs-selector-tag">quote</span>
+        go: found rsc.io/<span class="hljs-selector-tag">quote</span> <span class="hljs-keyword">in</span> rsc.io/<span class="hljs-selector-tag">quote</span> v1.<span class="hljs-number">5.2</span>
+        </code></pre><p>After that, the <code>go.mod</code> module file is updated, and a <code>go.sum</code> file is created if it doesn&#39;t exist already.</p>
+            <h3 id="local-packages">Local Packages</h3>
+            <p>When creating your own packages you may want to use a local version if it&#39;s not published yet. </p>
+            <p>Use the <code>go mod edit -replace</code> command to change a dependency&#39;s source:</p>
+            <pre><code>$ <span class="hljs-built_in">go</span> <span class="hljs-built_in">mod</span> edit -replace <span class="hljs-built_in">example</span>/greetings=../greetings
+        </code></pre><p>The above will update the module to use the local module located at <code>../greetings</code> in place of the <code>example/greetings</code> package.</p>
+            <p>Afterwards, use <code>go mod tidy</code> like normal to resolve the dependency.</p>
+            <h2 id="read-on">Read on</h2>
+            <ul>
+                <li><a href="./errors.md">Errors</a></li>
+                <li><a href="./syntax.md">Syntax</a></li>
+                <li><a href="./structs.md">Structs</a></li>
+                <li><a href="./interfaces.md">Interfaces</a></li>
+                <li><a href="./testing.md">Testing</a></li>
+                <li><a href="./web-api/gin.md">Web APIs</a></li>
+            </ul>
+        </div>
+    </main>
+    <aside class="sidebar right-sidebar">
+        <button class="sidebar-toggle" id="toggle-right-button" onclick="toggleSidebarRight()">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </aside>
+    <footer class="footer"></footer>
+</div>
+</body>
+</html>

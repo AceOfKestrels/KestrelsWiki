@@ -5,6 +5,7 @@ import (
 	"api/controller/searchController"
 	"api/controller/webhookController"
 	"api/logger"
+	params "api/parameters"
 	"api/service"
 	"flag"
 	"fmt"
@@ -13,20 +14,21 @@ import (
 	"log"
 )
 
-var ApiPort int
-var Debug bool
-
 func main() {
 	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
 	debug := flag.Bool("debug", false, "debug mode")
+	contentPath := flag.String("contentPath", "../testFiles/", "the content path")
+	wwwroot := flag.String("wwwroot", "wwwroot/", "the web content root path")
 	flag.Parse()
 
-	ApiPort = *apiPort
-	Debug = *debug
+	params.ApiPort = *apiPort
+	params.Debug = *debug
+	params.ContentPath = *contentPath
+	params.WWWRoot = *wwwroot
 
 	logger.Init()
 
-	searchService := service.NewSearchService("../testFiles/")
+	searchService := service.NewSearchService(params.ContentPath)
 
 	err := searchService.RebuildIndex(true)
 
@@ -44,8 +46,8 @@ func main() {
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
 	engine.POST(webhookCtrl.WebhookEndpoint, webhookCtrl.PostWebhook)
 
-	logger.Println(logger.API, "starting web server on port %v", ApiPort)
-	err = engine.Run(fmt.Sprintf("localhost:%v", ApiPort))
+	logger.Println(logger.API, "starting web server on port %v", params.ApiPort)
+	err = engine.Run(fmt.Sprintf("localhost:%v", params.ApiPort))
 	if err != nil {
 		log.Fatal(err)
 	}
