@@ -11,7 +11,8 @@ type FileService interface {
 }
 
 type Controller struct {
-	fileService FileService
+	fileService   FileService
+	PathParamName string
 }
 
 func New(fileService FileService) *Controller {
@@ -23,7 +24,7 @@ const articleFile = "/article.html"
 const notFoundFile = "/not-found.html"
 
 func (ctrl *Controller) GetPage(c *gin.Context) {
-	filePath := c.Param("path")
+	filePath := c.Request.URL.Path
 
 	if len(filePath) == 0 {
 		c.File(indexFile)

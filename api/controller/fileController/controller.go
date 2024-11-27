@@ -14,16 +14,17 @@ type FileService interface {
 }
 
 type Controller struct {
-	fileService FileService
-	Path        string
+	fileService   FileService
+	Path          string
+	PathParamName string
 }
 
-func New(fileService FileService, path string) *Controller {
-	return &Controller{fileService: fileService, Path: path}
+func New(fileService FileService, path string, pathParamName string) *Controller {
+	return &Controller{fileService: fileService, Path: path, PathParamName: pathParamName}
 }
 
 func (f *Controller) GetFile(c *gin.Context) {
-	filePath := c.Param("filepath")
+	filePath := c.Param(f.PathParamName)
 	if filePath == "" {
 		c.Status(http.StatusBadRequest)
 		logger.Println(logger.API, "error: filepath was empty")

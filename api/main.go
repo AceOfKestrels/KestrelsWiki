@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api/controller/fileController"
 	"api/controller/searchController"
 	"api/controller/webhookController"
 	"api/controller/webpageController"
@@ -10,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	_ "github.com/xiaoqidun/entps"
 	"log"
 )
 
@@ -38,15 +38,15 @@ func main() {
 	}
 	engine := gin.Default()
 
-	//fileCtrl := fileController.New(fileServ, "/api/file")
 	webCtrl := webpageController.New(fileServ)
+	fileCtrl := fileController.New(fileServ, "/api/file", "path")
 	searchCtrl := searchController.New(fileServ, "/api/search")
 	webhookCtrl := webhookController.New(fileServ, "/api/webhook")
 
-	//engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
-	engine.GET("/*path", webCtrl.GetPage)
+	engine.GET(fileCtrl.Path+"/*path", fileCtrl.GetFile)
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
 	engine.POST(webhookCtrl.WebhookEndpoint, webhookCtrl.PostWebhook)
+	engine.NoRoute(webCtrl.GetPage)
 
 	logger.Println(logger.API, "starting web server on port %v", params.ApiPort)
 	err = engine.Run(fmt.Sprintf("localhost:%v", params.ApiPort))
