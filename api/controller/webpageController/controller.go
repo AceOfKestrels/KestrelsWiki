@@ -18,11 +18,11 @@ func New(fileService FileService) *Controller {
 	return &Controller{fileService: fileService}
 }
 
-const indexFile = "index.html"
-const articleFile = "article.html"
-const notFoundFile = "not-found.html"
+const indexFile = "/index.html"
+const articleFile = "/article.html"
+const notFoundFile = "/not-found.html"
 
-func (ctrl *Controller) Get(c *gin.Context) {
+func (ctrl *Controller) GetPage(c *gin.Context) {
 	filePath := c.Param("path")
 
 	if len(filePath) == 0 {
@@ -41,12 +41,12 @@ func (ctrl *Controller) Get(c *gin.Context) {
 
 func (ctrl *Controller) getFullPath(path string) (fullPath string, err error) {
 	fullPath = params.WWWRoot + path
-	if ctrl.fileService.Exists(path) {
+	if ctrl.fileService.Exists(fullPath) {
 		return
 	}
 
 	fullPath = params.ContentPath + path
-	if ctrl.fileService.Exists(path) {
+	if ctrl.fileService.Exists(fullPath) {
 		return
 	}
 

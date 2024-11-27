@@ -58,7 +58,7 @@ func (s *ServiceImpl) Exists(filePath string) bool {
 }
 
 func (s *ServiceImpl) GetArticle(path string) (string, error) {
-	return "", fmt.Errorf("no")
+	return "", nil
 }
 
 func (s *ServiceImpl) RebuildIndex(firstBuild bool) error {

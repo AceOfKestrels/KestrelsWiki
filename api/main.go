@@ -1,9 +1,9 @@
 package main
 
 import (
-	"api/controller/fileController"
 	"api/controller/searchController"
 	"api/controller/webhookController"
+	"api/controller/webpageController"
 	"api/logger"
 	params "api/parameters"
 	"api/service/fileService"
@@ -18,7 +18,7 @@ func main() {
 	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
 	debug := flag.Bool("debug", false, "debug mode")
 	contentPath := flag.String("contentPath", "../testFiles/", "the content path")
-	wwwroot := flag.String("wwwroot", "wwwroot/", "the web content root path")
+	wwwroot := flag.String("wwwroot", "wwwroot", "the web content root path")
 	flag.Parse()
 
 	params.ApiPort = *apiPort
@@ -38,11 +38,13 @@ func main() {
 	}
 	engine := gin.Default()
 
-	fileCtrl := fileController.New(fileServ, "/api/file")
+	//fileCtrl := fileController.New(fileServ, "/api/file")
+	webCtrl := webpageController.New(fileServ)
 	searchCtrl := searchController.New(fileServ, "/api/search")
 	webhookCtrl := webhookController.New(fileServ, "/api/webhook")
 
-	engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
+	//engine.GET(fileCtrl.Path+"/*filepath", fileCtrl.GetFile)
+	engine.GET("/*path", webCtrl.GetPage)
 	engine.POST(searchCtrl.Path, searchCtrl.PostSearch)
 	engine.POST(webhookCtrl.WebhookEndpoint, webhookCtrl.PostWebhook)
 
