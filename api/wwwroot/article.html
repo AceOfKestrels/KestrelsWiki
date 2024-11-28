@@ -5,30 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kestrel's Wiki</title>
 
-    <link rel="stylesheet" href="style/main.css">
-    <link rel="stylesheet" href="style/variables.css">
-    <link rel="stylesheet" href="style/font.css">
+    <link rel="stylesheet" href="/style/main.css">
+    <link rel="stylesheet" href="/style/variables.css">
+    <link rel="stylesheet" href="/style/font.css">
 
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
     <script src="js/script.js"></script>
     <script src="https://kit.fontawesome.com/d9094755fb.js" crossorigin="anonymous"></script>
 </head>
 <body>
-<div id="layout" class="layout">
+<div id="__layout" class="layout">
     <header class="header">
         <h1>Kestrel's Wiki</h1>
     </header>
     <aside class="sidebar left-sidebar">
-        <button class="sidebar-toggle" id="toggle-left-button" onclick="toggleSidebarLeft()">
+        <button class="sidebar-toggle" id="__toggle-left-button" onclick="toggleSidebarLeft()">
             <i class="fa-solid fa-bars-staggered"></i>
         </button>
     </aside>
-    <main class="content" hx-get="/api/file/readme" hx-trigger="load" hx-target="#content-container" hx-swap="innerHTML">
-        <div id="content-container">
-        </div>
+    <main class="content"
+          hx-get="/api/file/readme"
+          hx-trigger="load"
+          hx-target="#__content-container"
+          hx-swap="innerHTML">
+        <div id="__content-container"></div>
     </main>
     <aside class="sidebar right-sidebar">
-        <button class="sidebar-toggle" id="toggle-right-button" onclick="toggleSidebarRight()">
+        <button class="sidebar-toggle" id="__toggle-right-button" onclick="toggleSidebarRight()">
             <i class="fa-solid fa-bars-staggered"></i>
         </button>
     </aside>

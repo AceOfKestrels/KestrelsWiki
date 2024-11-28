@@ -3,22 +3,21 @@
     padding: 25px;
     background-color: var(--color-content-background);
     border-radius: var(--border-radius);
-    transition: width 0.3s;
 }
 
-#content-container code, #content-container code * {
+#__content-container code, #__content-container code * {
     font-family: monospace;
 }
 
-#content-container h1 {
+#__content-container h1 {
     font-size: 2em;
     margin-bottom: 0.75em;
 }
 
-#content-container h2, #content-container h3 {
+#__content-container h2, #__content-container h3 {
     margin-top: 1em;
 }
 
-#content-container p {
+#__content-container p {
     margin-top: 0.5em;
 }
