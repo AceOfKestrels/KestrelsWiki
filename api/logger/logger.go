@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 const (
@@ -14,13 +15,20 @@ const (
 	API  = "API"
 )
 
+const (
+	logFileFormat      = ".log"
+	logTimestampFormat = "2006-01-02_15-04-05"
+)
+
 var LogFile *os.File
-var latestLogPath string
+var logFilePath string
 
 func Init() {
 	logWriter := initLogFile(params.LogPath)
 	log.SetOutput(logWriter)
 	gin.DefaultWriter = logWriter
+
+	go syncLogFile()
 }
 
 func initLogFile(logPath string) io.Writer {
@@ -28,31 +36,28 @@ func initLogFile(logPath string) io.Writer {
 		return os.Stdout
 	}
 
-	latestLogPath = logPath + "latest.log"
-	err := RenameOldLogFile(logPath)
+	logFilePath = logPath + time.Now().Format(logTimestampFormat) + logFileFormat
+
+	err := os.MkdirAll(params.LogPath, 0666)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	err = os.MkdirAll(params.LogPath, 0666)
+	LogFile, err = os.OpenFile(logFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		panic(err)
-	}
-
-	LogFile, err = os.OpenFile(latestLogPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return io.MultiWriter(os.Stdout, LogFile)
 }
 
-func RenameOldLogFile(logPath string) error {
-	file, err := os.Stat(latestLogPath)
-	if err != nil {
-		return nil
+func syncLogFile() {
+	for {
+		time.Sleep(time.Second)
+		if LogFile != nil {
+			_ = LogFile.Sync()
+		}
 	}
-	return os.Rename(latestLogPath, logPath+file.ModTime().Format("2006-01-02_15-04-05")+".log")
 }
 
 func Println(prefix string, format string, v ...interface{}) {
