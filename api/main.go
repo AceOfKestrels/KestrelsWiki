@@ -12,37 +12,45 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
-	"time"
+	"os"
+	"os/signal"
 )
 
 func main() {
+	readParameters()
+
+	logger.Init()
+
+	fileServ := fileService.New(params.ContentPath)
+	err := fileServ.RebuildIndex(true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	initGin(fileServ)
+
+	waitForExitSignal()
+}
+
+func readParameters() {
 	apiPort := flag.Int("apiPort", 8080, "the port to run the api on")
 	debug := flag.Bool("debug", false, "debug mode")
-	contentPath := flag.String("contentPath", "../testFiles/", "the content path")
+	contentPath := flag.String("contentPath", "../testFiles", "the content path")
 	wwwroot := flag.String("wwwroot", "wwwroot", "the web content root path")
 	logPath := flag.String("logPath", "", "the path where log files are saved. leave black to disable logging to file")
 	flag.Parse()
 
 	params.ApiPort = *apiPort
 	params.Debug = *debug
-	params.ContentPath = *contentPath
+	params.ContentPath = *contentPath + "/"
 	params.WWWRoot = *wwwroot
 	params.LogPath = *logPath
 
-	logger.Init()
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Recovered from panic: %v", r)
-		}
-		cleanup()
-	}()
+}
 
-	fileServ := fileService.New(params.ContentPath)
-
-	err := fileServ.RebuildIndex(true)
-
+func initGin(fileServ *fileService.ServiceImpl) {
 	logger.Println(logger.API, "initializing gin engine")
-	if !*debug {
+	if !params.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.Default()
@@ -58,22 +66,23 @@ func main() {
 	engine.NoRoute(webCtrl.GetPage)
 
 	logger.Println(logger.API, "starting web server on port %v", params.ApiPort)
-	err = engine.Run(fmt.Sprintf("localhost:%v", params.ApiPort))
+	err := engine.Run(fmt.Sprintf("localhost:%v", params.ApiPort))
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
-	for {
-		time.Sleep(time.Second)
-		if logger.LogFile != nil {
-			_ = logger.LogFile.Sync()
-		}
-	}
+func waitForExitSignal() {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, os.Kill)
+	<-sigCh
+	cleanup()
 }
 
 func cleanup() {
+	logger.Println(logger.INIT, "Shutting down")
+
 	if logger.LogFile != nil {
 		_ = logger.LogFile.Close()
-		_ = logger.RenameOldLogFile(params.LogPath)
 	}
 }
