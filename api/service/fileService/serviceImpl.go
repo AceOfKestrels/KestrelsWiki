@@ -57,10 +57,6 @@ func (s *ServiceImpl) Exists(filePath string) bool {
 	return err == nil
 }
 
-func (s *ServiceImpl) GetArticle(path string) (string, error) {
-	return "", nil
-}
-
 func (s *ServiceImpl) RebuildIndex(firstBuild bool) error {
 	logger.Println(logger.INIT, "pulling changes from github")
 	err := s.gitPull()

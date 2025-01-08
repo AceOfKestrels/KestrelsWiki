@@ -1,13 +1,16 @@
 package webpageController
 
 import (
+	"api/models"
 	params "api/parameters"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
 )
 
 type FileService interface {
 	Exists(path string) bool
-	GetArticle(path string) (string, error)
+	GetFileDto(filePath string) (models.FileDTO, error)
 }
 
 type Controller struct {
@@ -31,16 +34,25 @@ func (ctrl *Controller) GetPage(c *gin.Context) {
 		return
 	}
 
-	fullPath, err := ctrl.getFullPath(filePath)
-	if err != nil {
+	fullPath, redirect := ctrl.getFullPath(filePath)
+	if len(fullPath) == 0 {
 		c.File(params.WWWRoot + notFoundFile)
+		return
+	}
+	if redirect {
+		fullPath = strings.ToLower(fullPath)
+		if strings.HasSuffix(fullPath, ".md") {
+			fullPath = fullPath[0 : len(fullPath)-3]
+		}
+		c.Redirect(http.StatusPermanentRedirect, fullPath)
 		return
 	}
 
 	c.File(fullPath)
 }
 
-func (ctrl *Controller) getFullPath(path string) (fullPath string, err error) {
+func (ctrl *Controller) getFullPath(path string) (fullPath string, redirect bool) {
+	redirect = false
 	fullPath = params.WWWRoot + path
 	if ctrl.fileService.Exists(fullPath) {
 		return
@@ -51,10 +63,13 @@ func (ctrl *Controller) getFullPath(path string) (fullPath string, err error) {
 		return
 	}
 
-	fullPath = params.WWWRoot + articleFile
-	if _, err = ctrl.fileService.GetArticle(path); err != nil {
-		fullPath = ""
+	dto, err := ctrl.fileService.GetFileDto(path)
+	if err != nil {
+		return "", false
+	}
+	if len(dto.MirrorOf) != 0 {
+		return dto.MirrorOf, true
 	}
 
-	return
+	return params.WWWRoot + articleFile, false
 }
