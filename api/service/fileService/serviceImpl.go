@@ -160,7 +160,7 @@ func (s *ServiceImpl) AddFileToIndex(filePath string) error {
 
 	renderedArticle := helper.RenderMarkdown(article)
 
-	s.setFile(filePath, meta.Title, commitData, renderedArticle)
+	s.setFile(filePath, meta.Title, commitData, article, renderedArticle)
 	return nil
 }
 
@@ -172,16 +172,17 @@ func (s *ServiceImpl) setMirror(origin string, target string) {
 }
 
 // setFile adds file content and metadata for a file located at path to the files map.
-func (s *ServiceImpl) setFile(path string, title string, commitData models.CommitData, content string) {
+func (s *ServiceImpl) setFile(path string, title string, commitData models.CommitData, content string, renderedContent string) {
 	path = strings.ToLower(path)
 
 	files[path] = models.FileDTO{
-		Path:       path,
-		Title:      title,
-		Content:    content,
-		Updated:    commitData.Date,
-		Author:     commitData.Author,
-		LastCommit: commitData.Hash,
+		Path:            path,
+		Title:           title,
+		Content:         content,
+		RenderedContent: renderedContent,
+		Updated:         commitData.Date,
+		Author:          commitData.Author,
+		LastCommit:      commitData.Hash,
 	}
 
 	countFiles++

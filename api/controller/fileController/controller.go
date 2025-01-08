@@ -53,7 +53,5 @@ func (f *Controller) GetFile(c *gin.Context) {
 		return
 	}
 
-	dto.Path = f.Path + "/" + dto.Path
-
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(dto.Content))
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(dto.RenderedContent))
 }
