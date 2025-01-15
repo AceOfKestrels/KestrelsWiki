@@ -3,6 +3,7 @@ package searchController
 import (
 	"api/logger"
 	"api/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -31,5 +32,12 @@ func (s *Controller) PostSearch(c *gin.Context) {
 	}
 
 	results := s.fileService.SearchFiles(search)
-	c.JSON(http.StatusOK, results)
+	resultTemplate := "<ul class=\"searchResults\">"
+
+	for _, result := range results {
+		path := result.Path[0 : len(result.Path)-3]
+		resultTemplate += fmt.Sprintf("<li class=\"searchResult\"><a href=\"%s\">%s</a></li>", path, result.Title)
+	}
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(resultTemplate))
 }
