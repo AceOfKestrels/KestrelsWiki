@@ -9,4 +9,6 @@ public interface IFileReader
     /// <param name="content"></param>
     /// <returns>The contents of the file, or null if an error occurs.</returns>
     Try<string> TryReadAllText(string path);
+
+    Try<bool> Exists(string path);
 }

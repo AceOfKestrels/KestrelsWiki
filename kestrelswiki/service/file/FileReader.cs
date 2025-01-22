@@ -20,4 +20,16 @@ public class FileReader(ILogger logger) : IFileReader
             return Try<string>.Fail(errorMessage, e);
         }
     }
+
+    public Try<bool> Exists(string path)
+    {
+        try
+        {
+            return new(File.Exists(path));
+        }
+        catch (Exception e)
+        {
+            return Try<bool>.Fail(e.Message);
+        }
+    }
 }
