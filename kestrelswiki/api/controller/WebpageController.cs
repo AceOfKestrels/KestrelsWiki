@@ -1,9 +1,10 @@
 using kestrelswiki.environment;
 using kestrelswiki.logging.logFormat;
-using kestrelswiki.logging.loggerFactory;
 using kestrelswiki.service.article;
 using kestrelswiki.service.webpage;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using ILoggerFactory = kestrelswiki.logging.loggerFactory.ILoggerFactory;
 
 namespace kestrelswiki.api.controller;
 
@@ -25,6 +26,8 @@ public class WebpageController(
     [HttpGet("")]
     public ActionResult GetHomepage()
     {
+        LogIncomingRequest();
+        // logger.Write("GET at /");
         return File(HomePage.HtmlPath) ?? GetNotFoundPage();
     }
 
@@ -34,6 +37,7 @@ public class WebpageController(
     [HttpGet("{*path}")]
     public ActionResult GetHomepageFile(string path)
     {
+        LogIncomingRequest();
         return File(Path.Combine(HomePage.DirPath, path)) ?? GetNotFoundPage();
     }
 
@@ -43,6 +47,7 @@ public class WebpageController(
     [HttpGet("wiki")]
     public ActionResult GetWikiFrontpage()
     {
+        LogIncomingRequest();
         return File(FrontPage.HtmlPath) ?? GetNotFoundPage();
     }
 
@@ -55,6 +60,7 @@ public class WebpageController(
     [HttpGet("wiki/{*path}")]
     public ActionResult GetWikiArticlePage(string path)
     {
+        LogIncomingRequest();
         return File(Path.Combine(FrontPage.DirPath, path))
                ?? File(Path.Combine(ArticlePage.DirPath, path))
                ?? (articleService.Exists(path) ? File(ArticlePage.HtmlPath) : GetNotFoundPage())
@@ -68,6 +74,7 @@ public class WebpageController(
     [HttpGet("global/{*path}")]
     public ActionResult GetGlobalFile(string path)
     {
+        LogIncomingRequest();
         return File(Path.Combine(
             Directory.GetCurrentDirectory(),
             Variables.WebRootPath,
@@ -78,12 +85,16 @@ public class WebpageController(
 
     protected ActionResult? File(string physicalPath)
     {
-        return webpageService.TryGetFile(physicalPath).Result;
+        ActionResult? result = webpageService.TryGetFile(physicalPath).Result;
+        if (result != null) logger.Write($"Returning file at {physicalPath}", LogLevel.Debug);
+        return result;
     }
 
     protected ActionResult GetNotFoundPage()
     {
-        return File(NotFoundPage.HtmlPath) ?? NotFound();
+        ActionResult? result = File(NotFoundPage.HtmlPath);
+        if (result == null) logger.Write("Not found page not found!");
+        return result ?? NotFound();
     }
 
     protected class WebpageInfo(string dirPath)

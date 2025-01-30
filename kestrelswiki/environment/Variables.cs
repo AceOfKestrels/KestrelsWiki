@@ -1,3 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
+using kestrelswiki.extensions;
+using Microsoft.Extensions.Logging;
+using ILogger = kestrelswiki.logging.logger.ILogger;
+
 namespace kestrelswiki.environment;
 
 public static class Variables
@@ -23,6 +29,12 @@ public static class Variables
 
     public static readonly string LogDateFormat =
         Environment.GetEnvironmentVariable("LOG_DATE_FORMAT") ?? ILogger.DefaultDateFormat;
+
+    public static readonly LogLevel LogLevel =
+        Environment.GetEnvironmentVariable("LOG_LEVEL")?.ToLogLevel() ?? LogLevel.Information;
+
+    public static readonly HashSet<string> DisabledLogDomains =
+        Environment.GetEnvironmentVariable("DISABLED_LOG_DOMAINS")?.Split(",").ToHashSet() ?? [];
 
     public static class Webpage
     {

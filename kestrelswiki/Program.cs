@@ -7,6 +7,7 @@ using kestrelswiki.service.file;
 using kestrelswiki.service.git;
 using kestrelswiki.service.webpage;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -47,6 +48,12 @@ public class Program
         logger.Write("Building host");
         WebApplication app = builder.Build();
 
+        app.UseForwardedHeaders(new()
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                               ForwardedHeaders.XForwardedProto,
+            ForwardLimit = 2
+        });
         app.MapControllers();
 
         using (IServiceScope scope = app.Services.CreateScope())

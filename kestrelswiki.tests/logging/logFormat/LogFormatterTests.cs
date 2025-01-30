@@ -1,4 +1,6 @@
+using kestrelswiki.extensions;
 using kestrelswiki.logging.logFormat;
+using Microsoft.Extensions.Logging;
 
 namespace kestrelswiki.tests.logging.logFormat;
 
@@ -13,9 +15,10 @@ public class LogFormatterTests
         LogDomain logDomain = LogDomain.Testing;
         string logMessage = "test message";
 
-        string expectedResult = $"{DateTime.Now.ToString(dateFormat)} [{logDomain.Name}] {logMessage}";
+        string expectedResult =
+            $"{DateTime.Now.ToString(dateFormat)} [{logDomain.Name}{LogLevel.Information.DisplayName()}] {logMessage}";
 
-        string result = formatter.Format(logDomain, logMessage);
+        string result = formatter.Format(logDomain, LogLevel.Information, logMessage);
 
         Assert.That(result, Is.EqualTo(expectedResult));
     }
