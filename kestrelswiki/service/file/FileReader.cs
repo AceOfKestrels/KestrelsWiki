@@ -10,15 +10,22 @@ public class FileReader(ILogger logger) : IFileReader
         if (string.IsNullOrWhiteSpace(path))
             return new(new ArgumentException("Unable to read file: Path is empty."));
 
+        return TryReadAllText(new FileInfo(Path.GetFullPath(path)));
+    }
+
+    public Try<string> TryReadAllText(FileInfo file)
+    {
+        if (!file.Exists) return Try<string>.Fail("File does not exist.");
+
         try
         {
-            using FileStream stream = File.OpenRead(path);
+            using FileStream stream = file.OpenRead();
             using StreamReader reader = new(stream);
             return new(reader.ReadToEnd());
         }
         catch (Exception e)
         {
-            string errorMessage = $"Unable to read file at {path}: {e.Message}";
+            string errorMessage = $"Unable to read file at {file.FullName}: {e.Message}";
             logger.Write(errorMessage);
             return Try<string>.Fail(errorMessage, e);
         }

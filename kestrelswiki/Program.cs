@@ -28,9 +28,11 @@ public class Program
         builder.Services.AddSingleton(lf);
         builder.Services.AddScoped<IFileWriter>(_ => new FileWriter(lf.Create(LogDomain.Files)));
         builder.Services.AddScoped<IFileReader>(_ => new FileReader(lf.Create(LogDomain.Files)));
+        builder.Services.AddSingleton<IArticleStore>(_ => new ArticleStore(lf.Create(LogDomain.ArticleStore)));
         builder.Services.AddScoped<IArticleService>(s => new ArticleService(
             lf.Create(LogDomain.ArticleService),
-            s.GetRequiredService<IFileReader>()
+            s.GetRequiredService<IFileReader>(),
+            s.GetRequiredService<IArticleStore>()
         ));
         builder.Services.AddScoped<IContentTypeProvider, FileExtensionContentTypeProvider>();
         builder.Services.AddScoped<IWebpageService>(s => new WebpageService(
