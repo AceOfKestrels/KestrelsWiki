@@ -2,23 +2,26 @@ namespace kestrelswiki.logging;
 
 public class Try<T>
 {
-    public Try(T? result)
+    public Try(T? result, Exception? exception = null)
     {
         Result = result;
+        Exception = exception;
+        Success = result is not null;
     }
 
-    public Try(Exception? exception)
+    public Try(Exception exception)
     {
         Exception = exception;
+        Success = false;
     }
 
     public T? Result { get; }
     public Exception? Exception { get; }
-    public bool Success => Exception is null && Result is not null;
+    public bool Success { get; }
 
     public static Try<T> Fail(string errorMessage, Exception? innerException = null)
     {
-        return new(new Exception(errorMessage, innerException));
+        return new(default, new(errorMessage, innerException));
     }
 
     public Try<T> Then(Action<T> action)
@@ -29,16 +32,11 @@ public class Try<T>
 
     public Try<T> Catch(Action<Exception> action)
     {
-        if (!Success)
+        if (Exception is not null)
             action(
                 Exception ??
                 new NullReferenceException($"{GetType().Name}<{typeof(T).Name}> failed. No exception was thrown.")
             );
         return this;
-    }
-
-    public T ResultOrDefault(T defaultValue)
-    {
-        return Success ? Result ?? defaultValue : defaultValue;
     }
 }

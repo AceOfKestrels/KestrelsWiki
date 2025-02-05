@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace kestrelswiki.service.file;
 
 public class FileReader(ILogger logger) : IFileReader
@@ -19,6 +22,36 @@ public class FileReader(ILogger logger) : IFileReader
             logger.Write(errorMessage);
             return Try<string>.Fail(errorMessage, e);
         }
+    }
+
+    // TODO: Don't do this recursively
+    public Try<IEnumerable<FileInfo>> GetMarkdownFiles(string path)
+    {
+        DirectoryInfo directory = new(path);
+        if (!directory.Exists) return new([]);
+
+        List<FileInfo> files = directory.GetFiles("*.md").ToList();
+        List<Exception> exceptions = [];
+
+        foreach (DirectoryInfo subDir in directory.GetDirectories().ToList().FindAll(d => d.Name != ".git"))
+        {
+            Try<IEnumerable<FileInfo>> tri = GetMarkdownFiles(subDir.FullName);
+            if (tri.Success) files.AddRange(tri.Result ?? []);
+
+            switch (tri.Exception)
+            {
+                case null:
+                    break;
+                case AggregateException aggEx:
+                    exceptions.AddRange(aggEx.InnerExceptions);
+                    break;
+                default:
+                    exceptions.Add(tri.Exception);
+                    break;
+            }
+        }
+
+        return new(files, new AggregateException(exceptions));
     }
 
     public Try<bool> Exists(string path)

@@ -29,7 +29,7 @@ public class Program
         builder.Services.AddScoped<IFileWriter>(_ => new FileWriter(lf.Create(LogDomain.Files)));
         builder.Services.AddScoped<IFileReader>(_ => new FileReader(lf.Create(LogDomain.Files)));
         builder.Services.AddScoped<IArticleService>(s => new ArticleService(
-            lf.Create(LogDomain.WebpageService),
+            lf.Create(LogDomain.ArticleService),
             s.GetRequiredService<IFileReader>()
         ));
         builder.Services.AddScoped<IContentTypeProvider, FileExtensionContentTypeProvider>();
@@ -60,6 +60,9 @@ public class Program
         {
             IGitService gitService = scope.ServiceProvider.GetRequiredService<IGitService>();
             await gitService.TryPullContentRepositoryAsync();
+
+            IArticleService articleService = scope.ServiceProvider.GetRequiredService<IArticleService>();
+            await articleService.RebuildIndex();
         }
 
         await app.RunAsync();
