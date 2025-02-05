@@ -14,7 +14,9 @@
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:8080",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "LOG_LEVEL": "Debug",
+        "ENABLE_WEBPAGE_API": "true"
       }
     }
   }

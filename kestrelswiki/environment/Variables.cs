@@ -36,6 +36,9 @@ public static class Variables
     public static readonly HashSet<string> DisabledLogDomains =
         Environment.GetEnvironmentVariable("DISABLED_LOG_DOMAINS")?.Split(",").ToHashSet() ?? [];
 
+    public static readonly bool EnableWebpageApi =
+        Environment.GetEnvironmentVariable("ENABLE_WEBPAGE_API")?.ToLowerInvariant() == "true";
+
     public static class Webpage
     {
         public static readonly string HomeDirectory = Environment.GetEnvironmentVariable("HOME_DIR") ?? "homepage";

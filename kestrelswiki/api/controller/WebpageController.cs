@@ -15,10 +15,10 @@ public class WebpageController(
     IWebpageService webpageService)
     : KestrelsController(loggerFactory, LogDomain.WebpageController)
 {
-    protected WebpageInfo ArticlePage = new(Variables.Webpage.ArticleDirectory);
-    protected WebpageInfo FrontPage = new(Variables.Webpage.FrontpageDirectory);
-    protected WebpageInfo HomePage = new(Variables.Webpage.HomeDirectory);
-    protected WebpageInfo NotFoundPage = new(Variables.Webpage.NotFoundDirectory);
+    protected readonly WebpageInfo articlePage = new(Variables.Webpage.ArticleDirectory);
+    protected readonly WebpageInfo frontPage = new(Variables.Webpage.FrontpageDirectory);
+    protected readonly WebpageInfo homePage = new(Variables.Webpage.HomeDirectory);
+    protected readonly WebpageInfo notFoundPage = new(Variables.Webpage.NotFoundDirectory);
 
     /// <summary>
     ///     The homepage at /
@@ -26,9 +26,11 @@ public class WebpageController(
     [HttpGet("")]
     public ActionResult GetHomepage()
     {
+        if (!Variables.EnableWebpageApi) return NotFound();
+
         LogIncomingRequest();
         // logger.Write("GET at /");
-        return File(HomePage.HtmlPath) ?? GetNotFoundPage();
+        return File(homePage.HtmlPath) ?? GetNotFoundPage();
     }
 
     /// <summary>
@@ -37,8 +39,10 @@ public class WebpageController(
     [HttpGet("{*path}")]
     public ActionResult GetHomepageFile(string path)
     {
+        if (!Variables.EnableWebpageApi) return NotFound();
+
         LogIncomingRequest();
-        return File(Path.Combine(HomePage.DirPath, path)) ?? GetNotFoundPage();
+        return File(Path.Combine(homePage.DirPath, path)) ?? GetNotFoundPage();
     }
 
     /// <summary>
@@ -47,8 +51,10 @@ public class WebpageController(
     [HttpGet("wiki")]
     public ActionResult GetWikiFrontpage()
     {
+        if (!Variables.EnableWebpageApi) return NotFound();
+
         LogIncomingRequest();
-        return File(FrontPage.HtmlPath) ?? GetNotFoundPage();
+        return File(frontPage.HtmlPath) ?? GetNotFoundPage();
     }
 
     /// <summary>
@@ -60,13 +66,14 @@ public class WebpageController(
     [HttpGet("wiki/{*path}")]
     public ActionResult GetWikiArticlePage(string path)
     {
+        if (!Variables.EnableWebpageApi) return NotFound();
+
         LogIncomingRequest();
-        return File(Path.Combine(FrontPage.DirPath, path))
-               ?? File(Path.Combine(ArticlePage.DirPath, path))
-               ?? (articleService.Exists(path) ? File(ArticlePage.HtmlPath) : GetNotFoundPage())
+        return File(Path.Combine(frontPage.DirPath, path))
+               ?? File(Path.Combine(articlePage.DirPath, path))
+               ?? (articleService.Exists(path) ? File(articlePage.HtmlPath) : GetNotFoundPage())
                ?? GetNotFoundPage();
     }
-
 
     /// <summary>
     ///     A global file relative to /global
@@ -74,6 +81,8 @@ public class WebpageController(
     [HttpGet("global/{*path}")]
     public ActionResult GetGlobalFile(string path)
     {
+        if (!Variables.EnableWebpageApi) return NotFound();
+
         LogIncomingRequest();
         return File(Path.Combine(
             Directory.GetCurrentDirectory(),
@@ -92,7 +101,7 @@ public class WebpageController(
 
     protected ActionResult GetNotFoundPage()
     {
-        ActionResult? result = File(NotFoundPage.HtmlPath);
+        ActionResult? result = File(notFoundPage.HtmlPath);
         if (result == null) logger.Write("Not found page not found!");
         return result ?? NotFound();
     }
