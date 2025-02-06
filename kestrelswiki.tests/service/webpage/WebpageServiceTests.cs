@@ -6,7 +6,7 @@ using Moq;
 
 namespace kestrelswiki.tests.service.webpage;
 
-public class WebpageService_Tests
+public class WebpageServiceTests
 {
     private Mock<IContentTypeProvider> _mockContentTypeProvider;
     private Mock<IFileReader> _mockFileReader;

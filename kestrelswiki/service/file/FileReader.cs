@@ -43,7 +43,7 @@ public class FileReader(ILogger logger) : IFileReader
         foreach (DirectoryInfo subDir in directory.GetDirectories().ToList().FindAll(d => d.Name != ".git"))
         {
             Try<IEnumerable<FileInfo>> tri = GetMarkdownFiles(subDir.FullName);
-            if (tri.Success) files.AddRange(tri.Result ?? []);
+            if (tri.Result is not null) files.AddRange(tri.Result ?? []);
 
             switch (tri.Exception)
             {

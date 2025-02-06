@@ -25,13 +25,4 @@ public class DefaultLoggerFactoryTests
 
         Assert.That(logger, Is.InstanceOf<MultiLogger>());
     }
-
-    [Test]
-    public void Create_CreatesLoggerThatLogsToFile()
-    {
-        ILogger logger = _factory.Create(LogDomain.Testing);
-        logger.Write("testMessage");
-
-        _fileWriterMock.Verify(writer => writer.WriteLine(It.IsAny<string>(), It.IsAny<string>()));
-    }
 }

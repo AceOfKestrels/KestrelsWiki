@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using kestrelswiki.models;
+using Microsoft.Extensions.Logging;
+using ILogger = kestrelswiki.logging.logger.ILogger;
 
 namespace kestrelswiki.service.article;
 
@@ -10,7 +12,7 @@ public class ArticleStore(ILogger logger) : IArticleStore
     public Article? Get(string path)
     {
         if (_articles.TryGetValue(path, out Article? article))
-            logger.Write($"Retrieved article: {article.Title} at {article.Path}");
+            logger.Write($"Retrieved article: {article.Title} at {article.Path}", LogLevel.Debug);
         return article;
     }
 

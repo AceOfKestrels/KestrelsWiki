@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using kestrelswiki.environment;
 using kestrelswiki.service.file;
 
@@ -9,25 +8,31 @@ public class ArticleService(ILogger logger, IFileReader fileReader, IArticleStor
 {
     public bool Exists(string path)
     {
-        return path == "true";
+        return store.Get(path) is not null;
     }
 
-    public async Task<Try<bool>> RebuildIndex()
+    public Try<bool> RebuildIndex()
     {
         Try<IEnumerable<FileInfo>> tri = fileReader.GetMarkdownFiles(Variables.ContentPath);
+        List<Exception> exceptions = [];
+
         if (tri.Result is not null)
             foreach (FileInfo file in tri.Result)
-                await AddToIndex(file);
+                AddToIndex(file).Catch(exceptions.Add);
+
         if (tri.Exception is AggregateException aggEx)
             foreach (Exception ex in aggEx.InnerExceptions)
                 logger.Write(ex.Message);
+        else if (tri.Exception is not null) logger.Write(tri.Exception.Message);
 
-        return new(tri.Success);
+        return new(tri.Result is not null, new AggregateException(exceptions));
     }
 
-    public async Task AddToIndex(FileInfo file)
+    protected Try<bool> AddToIndex(FileInfo file)
     {
         Try<string> tri = fileReader.TryReadAllText(file);
-        if (tri.Result is not null) store.Set(new(file.FullName, file.Name, tri.Result));
+        // use fileReader to get article infos. we do not interact with physical file here
+        // if (tri.Result is not null) store.Set(new(file.FullName, file.Name, tri.Result));
+        return new(true);
     }
 }

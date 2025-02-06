@@ -64,7 +64,7 @@ public class Program
             await gitService.TryPullContentRepositoryAsync();
 
             IArticleService articleService = scope.ServiceProvider.GetRequiredService<IArticleService>();
-            await articleService.RebuildIndex();
+            articleService.RebuildIndex();
         }
 
         await app.RunAsync();

@@ -27,7 +27,7 @@ public class WebpageService(ILogger logger, IFileReader fileReader, IContentType
         }
 
         tri.Catch(e => logger.Write(FormatErrorMessage(path, e.Message)));
-        return tri.Success
+        return tri.Result is not null
             ? new(tri.Result)
             : Try<PhysicalFileResult>.Fail(FormatErrorMessage(path, tri.Exception?.Message));
     }

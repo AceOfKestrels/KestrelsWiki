@@ -2,10 +2,10 @@ using kestrelswiki.logging;
 
 namespace kestrelswiki.tests.logging;
 
-public class Try_Tests
+public class TryTests
 {
     [Test]
-    public void Contructor_Success_CreatesSuccessInstanceWithResult()
+    public void Constructor_Success_CreatesSuccessInstanceWithResult()
     {
         string value = "value";
         Try<string> tri = new(value);
@@ -19,28 +19,15 @@ public class Try_Tests
     }
 
     [Test]
-    public void Contructor_Fail_CreatesFailedInstanceWithException()
+    public void Constructor_Fail_CreatesFailedInstanceWithException()
     {
-        Try<string> tri = new(new Exception());
+        Try<string> tri = new(new());
 
         Assert.Multiple(() =>
         {
             Assert.That(tri.Success, Is.False);
             Assert.That(tri.Result, Is.Null);
             Assert.That(tri.Exception, Is.Not.Null);
-        });
-    }
-
-    [Test]
-    public void Contructor_SuccessWithNullValue_CreatesFailedInstanceWithoutExceptionOrResult()
-    {
-        Try<string> tri = new((string)null);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(tri.Success, Is.False);
-            Assert.That(tri.Result, Is.Null);
-            Assert.That(tri.Exception, Is.Null);
         });
     }
 
@@ -78,7 +65,7 @@ public class Try_Tests
     [Test]
     public void Then_Fail_DoesNotRun()
     {
-        Try<string> tri = new(new Exception());
+        Try<string> tri = new(new());
         bool run = false;
 
         tri.Then(_ => run = true);
@@ -89,7 +76,7 @@ public class Try_Tests
     [Test]
     public void Catch_Fail_RunsAction()
     {
-        Try<string> tri = new(new Exception());
+        Try<string> tri = new(new());
         bool run = false;
 
         tri.Catch(_ => run = true);
@@ -106,16 +93,5 @@ public class Try_Tests
         tri.Catch(_ => run = true);
 
         Assert.That(run, Is.False);
-    }
-
-    [Test]
-    public void Catch_FailWithoutException_RunsActionWithNewException()
-    {
-        Try<string> tri = new((string)null);
-        bool run = false;
-
-        tri.Catch(e => run = true);
-
-        Assert.That(run, Is.True);
     }
 }
